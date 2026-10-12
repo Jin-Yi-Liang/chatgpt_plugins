@@ -1,162 +1,159 @@
-# 油猴适配与 Greasy Fork 发布指南
+# 油猴构建、安装与 Greasy Fork 发布
 
-资料核实日期：**2026-10-13**。
+资料及操作核实日期：**2026-10-13**。当前版本 **v0.3.0**。
 
-本文说明怎样把本项目转换成油猴脚本并公开分发。**当前 v0.2.0 仅有 Chrome / Firefox 扩展，尚未实现以下 userscript 入口与构建。** 现有 `npm run build` / `npm run package` 生成的是扩展目录和 ZIP，不能直接上传为油猴脚本。
+油猴运行层、完整脚本构建和真实双浏览器验收已完成。代码在本地 `feat/tampermonkey` 分支，从 `main` 的 `856316b` 开始，源码实现提交 `246997d`。本轮没有推送 GitHub，没有合并 main。
 
-## 1. 先区分三个角色
+**当前尚未发布到 Greasy Fork。** 已登录作者账号，并从个人控制台进入发布入口；平台要求先设置安全登录方法。该账号目前需要完成“邮箱验证 + 2FA”，或按页面流程配置“仅第三方登录”。涉及邮箱确认、认证器和账号凭据的步骤由作者本人完成。没有提交脚本，也没有生成公开安装链接。
 
-| 角色 | 用途 |
+## 1. 安装与分发的关系
+
+| 项目 | 用途 |
 | --- | --- |
-| Tampermonkey（篡改猴，常称油猴） | 装在浏览器中的用户脚本管理器，安装、运行和更新脚本 |
-| Greasy Fork | 发布脚本、提供安装页面、版本记录和反馈 |
-| GitHub | 保存源码、构建说明及版本；也可以自行分发完整 `.user.js` |
+| Tampermonkey | 安装在 Chrome / Firefox 中，负责运行与更新用户脚本 |
+| Greasy Fork | 托管完整脚本、安装入口、版本记录和用户反馈 |
+| GitHub | 源码、构建流程、问题反馈；也可独立分发完整 `.user.js` |
 
-用户通常先安装脚本管理器，再在脚本页面点击安装。这是 [Greasy Fork 官方安装流程](https://greasyfork.org/zh-CN/help/installing-user-scripts)。
+用户先装脚本管理器，再安装脚本。见 [Greasy Fork 安装帮助](https://greasyfork.org/zh-CN/help/installing-user-scripts)。本项目只启用 ChatGPT；DeepSeek / Claude 仅预留接口。
 
-本项目已有页面识别、导航、目录维护和 Markdown 转换。发布页面的操作不复杂，主要工作是增加油猴运行接口和独立构建，并在 Chrome / Firefox 的真实 Tampermonkey 环境重测。
+## 2. 从源码生成交付文件
 
-## 2. 发布前需要适配什么
+需要 Node.js 22+ 与 npm。先取得包含本版分支的源码；本地分支尚未推送时，远程克隆无法取得本版实现。以下命令均在项目根目录运行：
 
-下面是实现准备，不代表这些接口已经写入仓库。
-
-| 当前扩展代码 | 油猴版本应处理的部分 |
-| --- | --- |
-| `browser/chrome.storage.local` | 增加 `GM_getValue` / `GM_setValue` 存储实现，保持上层异步接口 |
-| `clipboardWrite` + Clipboard API | 增加 `GM_setClipboard` 复制实现，验证连续 Markdown 的实际粘贴结果 |
-| `runtime.onMessage` 与工具栏 popup | 油猴入口不直接绑定扩展消息；用页面按钮及 `GM_registerMenuCommand` 控制显示 / 收起 |
-| `manifest.json` | 用 Userscript 元数据声明名称、版本、站点和所需授权 |
-| Chrome / Firefox ZIP | 新增单文件、可读的 `.user.js` 输出 |
-| 扩展集成测试 | 保留原测试，再增加“真正安装在 Tampermonkey 中”的验收 |
-
-这些 GM API 的说明见 [Tampermonkey 官方文档](https://www.tampermonkey.net/documentation.php)。现有页面 DOM、跳转、目录、H1 和 Markdown 核心逻辑可以复用；需要适配的是运行环境。不能仅把 `dist/chrome/content.js` 改名成 `.user.js`，因为它仍会调用扩展专用 API。
-
-建议为扩展和油猴保留不同入口 / 运行适配层，继续共用核心代码。油猴版存储和当前扩展存储是不同容器，应明确是否提供迁移，不能默认承诺已有自定义标题会自动转移。
-
-## 3. 准备 `.user.js` 元信息
-
-下面是后续油猴版本的元信息示例，**不是完整脚本，也不是已发布版本**。示例版本 `0.3.0` 需按实际发布版本调整：
-
-```javascript
-// ==UserScript==
-// @name         对话导航 · ChatGPT
-// @namespace    https://github.com/Jin-Yi-Liang/chatgpt_plugins
-// @version      0.3.0
-// @description  按提问导航 ChatGPT，会话目录、只读一级标题、Markdown 复制和导出
-// @match        https://chatgpt.com/*
-// @match        https://chat.openai.com/*
-// @run-at       document-idle
-// @noframes
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_setClipboard
-// @grant        GM_registerMenuCommand
-// @license      MIT
-// @homepageURL  https://github.com/Jin-Yi-Liang/chatgpt_plugins
-// @supportURL   https://github.com/Jin-Yi-Liang/chatgpt_plugins/issues
-// ==/UserScript==
-
-// 此处应是经过适配和构建的完整脚本主体，而不是远程主程序加载器。
+```bash
+npm ci
+npm run build
+npm run check:userscript
 ```
 
-- `@grant` 应与真正使用的接口一致。若后续使用 `GM_download`，再添加对应授权并验证下载；现有 Blob 下载方式也需要在油猴沙箱内测试。
-- 保持 `@namespace` / `@name` 的身份稳定，后续修改代码时递增 `@version`。
-- 匹配规则只包含已实现的 ChatGPT 站点。DeepSeek / Claude 尚未实现，不加入发布声明。
-
-Greasy Fork 对字段和版本的处理见 [官方元信息说明](https://greasyfork.org/zh-CN/help/meta-keys)，运行授权与加载时机见 [Tampermonkey 元信息文档](https://www.tampermonkey.net/documentation.php)。
-
-## 4. 打包及第三方依赖
-
-1. 增加独立 userscript 构建入口，输出例如 `dist/userscript/chatgpt-conversation-navigator.user.js`。**该路径目前不存在，也没有对应 npm 命令。**
-2. 在脚本顶部加入完整元信息，主体不依赖 Node、模块加载器或扩展专用 API。
-3. 保留可阅读的输出，不启用代码压缩或混淆。Greasy Fork 允许可读的打包代码，脚本上限为 2 MB。见 [发布规则](https://greasyfork.org/zh-CN/help/code-rules)。
-4. 处理 Turndown 和 GFM 插件的来源及 MIT 授权。优先评估允许来源的固定版本 `@require`；如有技术原因必须内嵌，附来源、版本和许可说明，并说明原因。见同一份发布规则。
-5. 若引入外部执行代码，按 [Greasy Fork 外部脚本规定](https://greasyfork.org/zh-CN/help/external-scripts) 选择允许的来源或完整性保护方式。不要把主功能写成下载远程代码后执行的壳。
-
-当前扩展构建未压缩，且附带 `THIRD_PARTY_NOTICES.txt`；油猴发布是单个文件，需要把适用的来源与许可信息带入该文件或按平台允许方式引用，不能依赖 ZIP 中的授权附件。
-
-## 5. 在本地验证真正的油猴版本
-
-油猴适配完成后，先测试再发布：
-
-1. 从 [Tampermonkey 官网](https://www.tampermonkey.net/) 进入对应浏览器的官方安装入口，分别安装 Chrome 和 Firefox 版本。
-2. 暂停本项目原生扩展，避免两种版本竞争同一个导航根节点，使验收结果混淆。
-3. 在 Tampermonkey 控制面板创建新脚本，替换为**完整构建后的 `.user.js`**，保存并启用。
-4. 确认匹配站点许可。对于 Tampermonkey 5.3+ 和 Chrome 138+，可在扩展详情中启用“允许用户脚本 / Allow User Scripts”：右键 Tampermonkey 图标 → 管理扩展 → 打开对应开关。官方也提供开发者模式作为另一种授权方式，具体按 [官方 FAQ 的 Q209](https://www.tampermonkey.net/faq.php?q=Q209) 操作。
-5. 刷新 ChatGPT，分别执行下面的手动验收。
-6. 自动化验收也必须安装 Tampermonkey 和脚本，调用其真实 GM API；仅在页面里伪造 GM 函数，不能作为发布验收。
-
-| 场景 | 预期 |
-| --- | --- |
-| 已有 / 新会话 | 提问目录正确，切换会话数据隔离 |
-| 长会话及窗口化页面 | 单击首、中、末提问；目录不丢项，未渲染项能重新定位 |
-| 滚轮和手动接管 | 面板上下滚动正常；定位中手动操作可接管 |
-| 标题改名 | 保存、取消、恢复、刷新持久化正常 |
-| 删除导航项 | 刷新和重新发现后仍删除，原始对话保留 |
-| 回复 H1 | 默认折叠，只显示 H1，两处标题都可跳转；没有编辑 / 删除控件 |
-| 复制与导出 | 非连续多选按顺序合并；实际粘贴与下载文件相同 |
-| Markdown | 代码、表格、链接和公式保留 |
-| 沙箱与权限 | 页面 CSP、不同浏览器的 GM 存储 / 剪贴板 / 下载均工作 |
-| 更新 | 更新到新版本后标题、删除状态与偏好仍可读取 |
-
-目前的 54 组扩展测试不能替代这份油猴验收。
-
-## 6. 在 Greasy Fork 发布第一版
-
-完成前面的适配与验收后：
-
-1. 打开 [Greasy Fork](https://greasyfork.org/zh-CN)，注册 / 登录自己的账号。
-2. 从个人用户页面进入“发布你编写的脚本 / Publish a script you've written”；常用入口是 [新脚本页面](https://greasyfork.org/zh-CN/scripts/new)，需要先登录。具体控件以登录后页面为准。
-3. 创建普通用户脚本，粘贴或导入完整 `.user.js` 内容。不要上传扩展 ZIP、manifest 或仅含元信息的空文件。
-4. 检查名称、描述、版本、语言、许可和匹配站点。
-5. 填写完整介绍：用途、安装方式、主功能、快捷键、数据存储方式、窗口化整理的行为及限制。
-6. 加入无敏感信息的界面截图，并链接到本项目源码和支持入口。
-7. 保存 / 发布，处理平台给出的格式或规则提示。发布后仍须遵守平台规则与后续管理要求，不保证固定审核时间或自动通过。
-8. 打开生成的脚本页面，检查代码、描述、匹配站点和版本。
-9. 用另一份干净浏览器配置，在脚本页点击安装按钮，经 Tampermonkey 安装后验收。不要只验证作者已编辑过的本地副本。
-10. 验收通过后，把脚本页链接加到 README 的安装区域，再将该链接发给普通用户。
-
-发布介绍可以按这个提纲填写：
+油猴输出：
 
 ```text
-用途：在 ChatGPT 中按提问导航长会话。
-功能：单击定位、完整目录、独立滚轮、自定义标题、删除导航项、折叠的回复 H1、Markdown 复制和导出。
-使用：安装 Tampermonkey → 安装脚本 → 刷新 ChatGPT → 在右侧操作。
-数据：标题、删除状态和偏好保存在脚本管理器本地存储；正文仅在当前页面内存中用于功能。
-限制：仅支持 ChatGPT，未加载的服务端历史 / 隐藏分支不能直接取回，页面结构变化可能需要更新。
-反馈：浏览器、Tampermonkey / 脚本版本、复现步骤、脱敏截图。
-源码：本项目 GitHub 仓库。
+dist/userscript/chatgpt-conversation-navigator.user.js
 ```
 
-关于用户从脚本页面安装的步骤，可直接引用 [Greasy Fork 安装帮助](https://greasyfork.org/zh-CN/help/installing-user-scripts)。
+只构建油猴可用 `npm run build:userscript`。需要同时生成扩展 ZIP 和可分发脚本时，准备系统 `zip` 后执行：
 
-## 7. 后续更新与 GitHub 管理
+```bash
+npm run package
+```
 
-建议 GitHub 作为源码主仓库，Greasy Fork 托管完整可安装脚本：
+v0.3.0 的三个发布文件：
 
-1. 修改共享代码和必要的适配器。
-2. 更新项目 / 脚本版本，重新构建扩展与 userscript。
-3. 重跑扩展测试和真实 Tampermonkey 测试。
-4. 提交源码、锁文件、构建说明和更新日志到 Git。
-5. 在已有 Greasy Fork 脚本条目中提交新版本，保持名称和 namespace 稳定。
-6. 确认线上代码确实是刚验证的构建，并测试一次从旧版本更新。
-7. 再更新 README 的发布链接和说明。
+```text
+artifacts/packages/conversation-navigator-0.3.0.user.js
+artifacts/packages/conversation-navigator-chrome-0.3.0.zip
+artifacts/packages/conversation-navigator-firefox-0.3.0.zip
+```
 
-第一版推荐直接上传完整代码，减少同步配置带来的变量。若后续使用平台同步设置，确认它同步的是完整 `.user.js`，而不是开发入口或远程加载器。Greasy Fork 会处理脚本的更新地址，见 [元信息说明](https://greasyfork.org/zh-CN/help/meta-keys)；不要在主逻辑里另写频繁更新轮询。
+只上传 `.user.js` 到 Greasy Fork。扩展 ZIP、manifest、`src/content.js` 都不能替代完整用户脚本。生成目录不提交 Git；他人可从源码重建。
 
-也可以只在 GitHub 独立分发完整 `.user.js`，但那是另一种分发方式。不能把 Greasy Fork 上的版本做成指引用户绕开平台实际代码的占位壳，见 [发布规则](https://greasyfork.org/zh-CN/help/code-rules)。
+## 3. 本地安装油猴版
 
-## 8. 发布前核对表
+1. 从 [Tampermonkey 官网](https://www.tampermonkey.net/) 进入 Chrome Web Store 或 Firefox AMO 安装官方管理器。
+2. Chrome 如要求授权用户脚本，打开 Tampermonkey 扩展详情中的“允许用户脚本 / Allow User Scripts”。Tampermonkey 5.3+ 与 Chrome 138+ 的说明见 [官方 FAQ Q209](https://www.tampermonkey.net/faq.php?q=Q209)。
+3. 停用本项目原生扩展，避免重复注入占用同一个面板。
+4. 打开 Tampermonkey 管理面板 → “实用工具 / Utilities” → 从文件导入。
+5. 选择完整 `.user.js`，在确认页核对名称“对话导航 · ChatGPT”、版本 `0.3.0`、两个 ChatGPT HTTPS 域名，点击安装。
+6. 刷新 ChatGPT 并进入已有会话。面板应显示 `ChatGPT · v0.3.0`。
+7. 用无敏感信息的会话检查单击跳转、长目录滚轮、标题保存、导航项删除、H1 折叠子导航、多选复制和下载。
 
-- [ ] 有真正适配后的 `.user.js`，不是改后缀的扩展 bundle。
-- [ ] 元信息身份、版本、许可、匹配站点正确。
-- [ ] 只声明真正需要的 GM 授权。
-- [ ] 输出可读，第三方库来源、版本和授权明确。
-- [ ] 发布完整主功能，外部执行代码符合平台规定。
-- [ ] Chrome 和 Firefox 的 Tampermonkey 环境均完成真实安装及功能验收。
-- [ ] 原生扩展和油猴测试结果分别记录。
-- [ ] 描述准确反映行为和限制，截图不含私人聊天。
-- [ ] 从线上脚本页完成过一次干净安装与更新验证。
-- [ ] README 包含实际安装页链接与源码构建步骤。
+另一种安装方式：Tampermonkey 新建脚本，替换编辑器内容为完整构建文件并保存。更新已有副本时在原脚本条目中替换，保持 `@name` 与 `@namespace`，避免创建重复脚本。
 
-本轮只整理了文档及发布流程，没有生成油猴运行版本、注册账号或向 Greasy Fork 提交脚本。
+原生扩展与油猴、不同浏览器的本地状态独立保存；v0.3.0 没有自动迁移标题或删除状态。
+
+## 4. 本次实现与发布规则
+
+| 能力 | 实现 |
+| --- | --- |
+| 本地状态 | `GM_getValue` / `GM_setValue`，保持核心代码异步接口 |
+| 复制 Markdown | 真实 `GM_setClipboard`；不读取剪贴板 |
+| 下载 Markdown | Blob 与浏览器下载；无需 `GM_download` 或白名单配置 |
+| 显示 / 收起 | 页面按钮、`Alt + Shift + N`、`GM_registerMenuCommand` |
+| 核心功能 | 与 Chrome / Firefox 原生扩展共用导航、目录、H1 与 Markdown 转换 |
+| 主代码 | 完整包含在 `.user.js` 中，保持可读，不压缩或混淆 |
+| 第三方库 | 固定版本 Turndown 7.2.4 与 turndown-plugin-gfm 1.0.2，通过 jsDelivr `@require` 加载，带 SHA-256 |
+| 授权 | 仅上述四个 GM API；匹配仅两个 ChatGPT HTTPS 域名；禁止 frames |
+
+构建时从锁定安装的库文件计算 SHA-256，元信息版本来自 `package.json`。库升级需重新锁定、构建与测试。主脚本当前为 **53,592 字节**。
+
+完整元信息请查看构建文件，不要单独复制元信息后发布空壳。`check:userscript` 会检查版本、匹配、四项授权、两个带哈希的依赖及扩展 API / 动态加载器隔离。
+
+规则参考：[Greasy Fork 发布规则](https://greasyfork.org/zh-CN/help/code-rules)、[外部脚本规定](https://greasyfork.org/zh-CN/help/external-scripts)、[允许的 CDN](https://greasyfork.org/zh-CN/help/cdns)、[元信息字段](https://greasyfork.org/zh-CN/help/meta-keys)。GM API 见 [Tampermonkey 文档](https://www.tampermonkey.net/documentation.php)。库的许可来源：[Turndown MIT](https://github.com/mixmark-io/turndown/blob/master/LICENSE)、[GFM 插件 MIT](https://github.com/mixmark-io/turndown-plugin-gfm/blob/master/LICENSE)。
+
+## 5. 真实浏览器发布前测试
+
+准备 Playwright Chromium、系统 Firefox、兼容 GeckoDriver 和系统 `zip` / `curl` / `unzip`。详细路径说明见 [README](../README.md#7-运行真实浏览器测试)。
+
+```bash
+npx playwright install chromium
+npm test
+npm run test:userscript
+npm run lint
+npm run check:userscript
+npm run package
+```
+
+`npm test` 安装本项目原生扩展；`npm run test:userscript` 仅安装官方 Tampermonkey，然后通过其管理面板真实导入本项目脚本，没有伪造 GM API。管理器下载来源和包哈希记录在 `artifacts/tampermonkey/sources.json`。
+
+| 运行方式 | Chromium / Chrome for Testing 156.0.8078.4 | Firefox 157.0 |
+| --- | --- | --- |
+| 原生扩展 | 27/27 通过 | 27/27 通过 |
+| Tampermonkey | 5.5.1，27/27 通过 | 5.5.0，27/27 通过 |
+
+共 **108/108 组**，包括单击位置与重排校正、窗口化目录、真实滚轮 / 键盘、标题及删除持久化、只读 H1、剪贴板实际粘贴、浏览器实际下载及内容一致性、菜单、会话切换、主题和窄屏。web-ext lint 为 0 错误 / 0 通知 / 0 警告。
+
+测试使用隔离真实浏览器与模拟会话、用户提供的脱敏 DOM。Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文未修改；生产脚本仅匹配 HTTPS。Chrome 采用官方 CRX 解压并恢复官方扩展 ID，Firefox 采用 AMO 签名 XPI。**这些结果不代表新版油猴已在用户登录 ChatGPT 的会话里现场验收，也不代表已经完成线上安装或更新测试。**
+
+证据：[v0.3.0 验收说明](verification-0.3.0.md)、[可复核数据](verification-0.3.0.json)。完整运行报告位于 `artifacts/tests/report.json` 与 `artifacts/tests-userscript/report.json`。
+
+## 6. 作者现在需要完成的账号步骤
+
+当前浏览器已停在首次发布的安全登录要求页。平台提供两条路径：
+
+1. **保留邮箱 / 密码登录**：点击发送验证链接，在自己的邮箱中完成验证；回到 Greasy Fork，点击启用 2FA，按页面指示绑定认证器并妥善保存恢复信息。这些涉及凭据的操作由作者本人执行，不将验证码、密码或恢复码交给自动化。
+2. **仅使用第三方登录**：按页面流程添加 GitHub / GitLab / Google 登录，再移除 Greasy Fork 密码。页面显示这条替代路径；采用前请本人确认第三方登录可用，避免失去账号访问。具体授权与登录方式变更由作者本人操作。
+
+账号保护完成后，回到个人控制台点击“发布您编写的脚本”。本次实际入口为 [创建脚本版本](https://greasyfork.org/zh-CN/script_versions/new)。首次作者会先看到用途确认页，选择“我编写了一个脚本并且想分享给其他人”。此前文档中的 `/scripts/new` 链接并非本次有效入口，已经改正。
+
+无需重新构建已验收的 v0.3.0。作者完成账号设置后可继续使用当前登录会话发布。
+
+## 7. 首次发布的完整操作
+
+1. 进入上节实际发布入口，完成作者用途确认。若仍停在安全要求页，先完成账号保护。
+2. 选择普通 JavaScript 用户脚本，将 `artifacts/packages/conversation-navigator-0.3.0.user.js` 的**完整内容**粘贴 / 导入代码字段。该字段的具体控件需以安全校验通过后的页面为准；本次尚未进入实际代码表单。
+3. 核对从元信息读取的名称、简短描述、版本 `0.3.0`、MIT、ChatGPT 两个站点。只声明已完成的平台能力。
+4. 在详细介绍中选择 Markdown（如页面提供该格式），粘贴 [greasyfork-description.md](greasyfork-description.md) 的完整内容。介绍已包含安装、功能、数据、依赖、限制、反馈；不含私人会话。
+5. 如页面需要更新说明，填写：`首次发布油猴版：提问导航、自定义及删除导航项、折叠的回复 H1、多选 Markdown 复制和导出。`
+6. 检查平台提示，预览介绍并提交发布。平台如要求人工验证或其他账号动作，作者自行完成；不要跳过警告或伪造通过状态。
+7. 保存生成的公开脚本页 URL、安装 `.user.js` URL 和版本号。在新窗口中确认公开页可访问、显示版本和绿色安装按钮。平台审核 / 管理状态以实际页面为准，不承诺固定时间。
+8. 核对线上代码主体与测试文件一致。Greasy Fork 可能增加 `@downloadURL` / `@updateURL`；记录这些元信息差异，比较主代码及固定依赖，不能仅凭页面版本号就认定文件一致。
+9. 分别用干净 Chrome / Firefox 配置安装官方 Tampermonkey，**从公开脚本页点击安装**并核对确认页，然后在 ChatGPT 运行第 3 节的手动验收。这一步验证公开分发链路，不用作者原来的本地副本代替。
+10. 完成后把公开安装页链接加进 README，保存线上核对和真实安装证据。当前这几项仍待发布后执行。
+
+GitHub 源码链接仍指向本项目仓库。该本地新分支尚未推送；若希望公众能查看本版对应源码，需由作者把新分支推送后提供分支 / commit 链接，或合并 main 后提供仓库主页。本轮没有执行这类远程操作。
+
+## 8. 后续版本更新
+
+1. 在源码修改共享功能或适配层，更新 `package.json` 和锁文件中的版本，补充 CHANGELOG。
+2. 构建、运行上面的两套浏览器测试与检查。若修改依赖，重新核对固定版本 / SHA-256。
+3. 提交源码、测试及文档到 Git，生成新版本 `.user.js`。
+4. 从自己的已有脚本页进入发布新版本，上传完整新文件，填写更新说明；保持 `@name` 和 `@namespace`，不要创建新脚本条目。
+5. 在保留旧版标题、删除状态和偏好的浏览器中触发 Tampermonkey 更新；核对新版、状态持久化和核心功能。这是**待未来更新时执行**的验收，首次发布不能提前声称已通过。
+6. 校验线上主代码与经过测试的构建一致，记录版本 / URL / 哈希，更新 README 和发布记录。
+
+本次采用完整代码直接发布，没有配置自动远程同步，也没有主逻辑更新轮询。Greasy Fork / Tampermonkey 负责后续脚本更新地址；见 [官方元信息说明](https://greasyfork.org/zh-CN/help/meta-keys)。
+
+## 9. 当前交付状态
+
+| 项目 | 状态 |
+| --- | --- |
+| 新分支与油猴实现 | 完成，`feat/tampermonkey` |
+| 完整发布文件 / 四项 GM 授权 / 固定依赖 | 完成 |
+| 两套真实双浏览器验收 | 108/108 通过 |
+| 文档和可直接粘贴的公开介绍 | 完成 |
+| Greasy Fork 注册 / 登录 | 作者已完成 |
+| 发布所需安全登录配置 | 待作者本人完成 |
+| 脚本提交 / 公开安装页 | 尚未执行 |
+| 公开安装链路与后续更新验收 | 发布后 / 后续版本执行 |
+| GitHub 推送 / main 合并 | 本轮未执行 |
