@@ -1,7 +1,7 @@
 import styles from './panel.css';
 import { findAdapter } from './platforms.js';
 import { selectedMarkdown } from './markdown.js';
-import { readStorage, writeStorage, extensionAPI } from './storage.js';
+import { readStorage, writeStorage, registerToggle, copyText, downloadText, runtimeKind } from './storage.js';
 import { version } from '../package.json';
 import { createNavigation } from './navigation.js';
 import { createInventory } from './inventory.js';
@@ -14,6 +14,7 @@ async function start() {
   const host = document.createElement('div');
   host.id = 'conversation-navigator-root';
   host.dataset.version = version;
+  host.dataset.runtime = runtimeKind;
   const shadow = host.attachShadow({ mode: 'open' });
   shadow.innerHTML = `
     <aside class="panel" aria-label="ChatGPT 对话导航">
@@ -193,21 +194,10 @@ async function start() {
     if (!result.text) { notify('没有可导出的回复，请先勾选已完成的提问。'); return; }
     try {
       if (download) {
-        const blob = new Blob([result.text], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a'); link.href = url;
         const name = document.title.replace(/\s*[-|] ChatGPT\s*$/i, '').replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 80) || 'ChatGPT';
-        link.download = `${name}-${new Date().toISOString().slice(0, 10)}.md`;
-        shadow.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+        await downloadText(result.text, `${name}-${new Date().toISOString().slice(0, 10)}.md`, shadow);
       } else {
-        try { await navigator.clipboard.writeText(result.text); }
-        catch {
-          // Firefox and pages with restricted Clipboard API still support the permission-backed copy command.
-          const focused = shadow.activeElement;
-          const textarea = document.createElement('textarea'); textarea.value = result.text; textarea.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0'; shadow.append(textarea); textarea.focus(); textarea.select();
-          const copied = document.execCommand('copy'); textarea.remove(); focused?.focus();
-          if (!copied) throw new Error('Clipboard write rejected');
-        }
+        await copyText(result.text, shadow);
       }
       notify(download ? `已导出 ${result.count} 条模型回复。` : `已复制 ${result.count} 条模型回复到剪贴板。`);
     } catch (error) { console.warn('[Conversation Navigator] Export failed', error); notify(download ? '下载失败，请检查浏览器的下载设置。' : '复制失败，请检查剪贴板权限，或使用「导出 .md」。'); }
@@ -235,7 +225,7 @@ async function start() {
     list.scrollTop += event.deltaY * scale;
     event.preventDefault(); event.stopPropagation();
   }, { passive: false });
-  extensionAPI.runtime.onMessage.addListener(message => { if (message.type === 'conversation-navigator:toggle') collapsed(!settings.collapsed); });
+  registerToggle(() => collapsed(!settings.collapsed));
   document.addEventListener('keydown', event => { if (event.altKey && event.shiftKey && event.code === 'KeyN') { event.preventDefault(); collapsed(!settings.collapsed); } });
   let scrollFrame;
   document.addEventListener('scroll', () => {

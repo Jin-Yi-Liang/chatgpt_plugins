@@ -11,12 +11,16 @@ import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { modernConversation } from './modern-fixture.mjs';
 import { scrollConversation, virtualConversation } from './scroll-fixture.mjs';
+import { installChromeScript, installFirefoxScript, firefoxTestScript, chromeManagerId, firefoxManagerUUID } from './tampermonkey.mjs';
 
 const root = process.cwd();
-const artifactDir = path.resolve(process.env.TEST_ARTIFACT_DIR || path.join(root, 'artifacts/tests'));
+const userscriptMode = process.env.TEST_RUNTIME === 'tampermonkey';
+const managerDirectory = path.join(root, 'artifacts/tampermonkey');
+const artifactDir = path.resolve(process.env.TEST_ARTIFACT_DIR || path.join(root, userscriptMode ? 'artifacts/tests-userscript' : 'artifacts/tests'));
 const extensionRoot = path.resolve(process.env.TEST_EXTENSION_ROOT || path.join(root, 'dist'));
 await mkdir(artifactDir, { recursive: true });
 const report = { started: new Date().toISOString(), scope: 'Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.', browsers: [] };
+report.runtime = userscriptMode ? 'Real Tampermonkey with UI-installed userscript, GM API calls and fixed-version @require libraries' : 'WebExtension';
 const reportPath = path.join(artifactDir, 'report.json');
 const failures = [];
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -47,6 +51,7 @@ async function sharedTests(ui, entry) {
     assert.equal(await title(0), '解释 RAG，并给出 Markdown 示例');
     assert.equal(await shadow(root => root.querySelector('.count').textContent), '3 条');
     assert.equal(await shadow(root => root.querySelector('#copy').disabled), true);
+    assert.equal(await ui.eval(() => document.querySelector('#conversation-navigator-root').dataset.runtime), userscriptMode ? 'tampermonkey' : 'extension');
   });
   await check('点击导航滚动到对应提问', async () => {
     await ui.click('.row:nth-child(3) .jump');
@@ -215,7 +220,7 @@ async function sharedTests(ui, entry) {
       const text = await ui.download(); assert.ok(text.includes('兼容回复一') && text.includes('兼容回复二'));
     }
   });
-  await check('工具栏弹出页渲染与内容脚本消息开关', async () => { await ui.popup(); });
+  await check(userscriptMode ? '真实 Tampermonkey 菜单注册与导航开关' : '工具栏弹出页渲染与内容脚本消息开关', async () => { await ui.popup(); });
   }
   const offset = index => ui.eval(index => {
     const scroller = document.querySelector('.thread-scroll-container');
@@ -349,10 +354,18 @@ if (browserList.includes('chromium')) {
   const profile = await mkdtemp(path.join(tmpdir(), 'navigator-chromium-'));
   let context;
   try {
-    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${path.join(extensionRoot, 'chrome')}`, `--load-extension=${path.join(extensionRoot, 'chrome')}`] });
+    const chromeExtension = userscriptMode ? path.join(managerDirectory, 'chrome') : path.join(extensionRoot, 'chrome');
+    if (userscriptMode) {
+      await mkdir(path.join(profile, 'Default'), { recursive: true });
+      await writeFile(path.join(profile, 'Default/Preferences'), JSON.stringify({ extensions: { ui: { developer_mode: true } } }));
+      entry.manager = JSON.parse(await readFile(path.join(managerDirectory, 'sources.json'), 'utf8')).chrome;
+      entry.extension = 'Official Tampermonkey CRX unpacked with original ID; own WebExtension NOT loaded; production .user.js imported through manager UI';
+    }
+    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, locale: 'en-US', viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${chromeExtension}`, `--load-extension=${chromeExtension}`] });
     entry.engine = context.browser()?.version();
     await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: htmlFor(route.request().url()) }));
     const page = await context.newPage();
+    if (userscriptMode) await installChromeScript(context, page, path.join(root, 'dist/userscript/chatgpt-conversation-navigator.user.js'));
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     const ui = {
       errors, eval: (fn, arg) => page.evaluate(fn, arg),
@@ -368,6 +381,18 @@ if (browserList.includes('chromium')) {
       async paste() { await page.locator('#paste-target').fill(''); await page.locator('#paste-target').focus(); await page.keyboard.press('Control+V'); return page.locator('#paste-target').inputValue(); },
       async download() { const [download] = await Promise.all([page.waitForEvent('download'), ui.click('#export')]); const file = await download.path(); assert.ok(download.suggestedFilename().endsWith('.md')); return readFile(file, 'utf8'); },
       async popup() {
+        if (userscriptMode) {
+          const popup = await context.newPage();
+          await popup.goto(`chrome-extension://${chromeManagerId}/action.html`);
+          const tabId = await popup.evaluate(async () => (await chrome.tabs.query({})).find(tab => tab.url?.startsWith('https://chatgpt.com/')).id);
+          await popup.evaluate(id => chrome.tabs.update(id, { active: true }), tabId);
+          await popup.reload();
+          await popup.getByText('显示 / 收起对话导航', { exact: true }).click();
+          await wait(async () => !await page.locator('#conversation-navigator-root .panel').isVisible(), 'GM menu toggles panel');
+          if (!popup.isClosed()) await popup.close();
+          await page.bringToFront(); await ui.click('#expand');
+          return;
+        }
         const session = await context.newCDPSession(page); const targets = await session.send('Target.getTargets');
         let id = targets.targetInfos.find(t => t.url.startsWith('chrome-extension://'))?.url.split('/')[2];
         if (!id) {
@@ -405,13 +430,19 @@ if (browserList.includes('firefox')) {
     const manifest = JSON.parse(await readFile(path.join(addonDir, 'manifest.json')));
     manifest.host_permissions.push('http://chatgpt.com/*'); manifest.content_scripts[0].matches.push('http://chatgpt.com/*');
     await writeFile(path.join(addonDir, 'manifest.json'), JSON.stringify(manifest));
-    const addon = path.join(scratch, 'addon.xpi'); execFileSync('zip', ['-q', '-r', addon, '.'], { cwd: addonDir });
+    let addon = path.join(scratch, 'addon.xpi'); execFileSync('zip', ['-q', '-r', addon, '.'], { cwd: addonDir });
+    if (userscriptMode) {
+      addon = path.join(managerDirectory, 'firefox.xpi');
+      entry.manager = JSON.parse(await readFile(path.join(managerDirectory, 'sources.json'), 'utf8')).firefox;
+      entry.extension = 'Official signed Tampermonkey XPI; own WebExtension NOT installed; UI-imported userscript with test-only HTTP ChatGPT match';
+    }
     server = createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html;charset=utf-8' }); res.end(htmlFor(req.url)); });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const origin = 'http://chatgpt.com';
     const extensionUUID = '899ba7fd-f617-42b7-a118-6c75fb4be955';
     const options = new firefox.Options().addArguments('-headless').setBinary(process.env.FIREFOX_BINARY || '/snap/firefox/current/usr/lib/firefox/firefox')
-      .setPreference('extensions.webextensions.uuids', JSON.stringify({ 'conversation-navigator@local.extension': extensionUUID }))
+      .setPreference('extensions.webextensions.uuids', JSON.stringify({ 'conversation-navigator@local.extension': extensionUUID, 'firefox@tampermonkey.net': firefoxManagerUUID }))
+      .setPreference('intl.locale.requested', 'en-US')
       .setPreference('browser.download.folderList', 2).setPreference('browser.download.dir', downloadDir)
       .setPreference('browser.download.useDownloadDir', true).setPreference('browser.helperApps.neverAsk.saveToDisk', 'text/markdown,text/plain,application/octet-stream')
       .setPreference('browser.download.always_ask_before_handling_new_types', false)
@@ -423,6 +454,7 @@ if (browserList.includes('firefox')) {
     driver = await new Builder().forBrowser('firefox').setFirefoxOptions(options).setFirefoxService(service).build();
     const capabilities = await driver.getCapabilities(); entry.engine = capabilities.get('browserVersion');
     entry.addonId = await driver.installAddon(addon, true);
+    if (userscriptMode) await installFirefoxScript(driver, await firefoxTestScript(scratch));
     await driver.manage().window().setRect({ width: 1440, height: 1000 });
     const element = selector => driver.executeScript('return document.querySelector("#conversation-navigator-root").shadowRoot.querySelector(arguments[0])', selector);
     const ui = {
@@ -447,6 +479,23 @@ if (browserList.includes('firefox')) {
         return readFile(path.join(downloadDir, file), 'utf8');
       },
       async popup() {
+        if (userscriptMode) {
+          const original = await driver.getWindowHandle();
+          await driver.switchTo().newWindow('tab');
+          await driver.get(`moz-extension://${firefoxManagerUUID}/action.html`);
+          const tabId = await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.tabs.query({}).then(tabs=>done(tabs.find(tab=>tab.url?.startsWith('http://chatgpt.com/')).id));`);
+          await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.tabs.update(arguments[0],{active:true}).then(()=>done(true));`,tabId);
+          await driver.navigate().refresh();
+          const menu = await driver.wait(async () => { const items=await driver.findElements(By.xpath('//*[text()="显示 / 收起对话导航"]'));return items[0]||false; },12000);
+          await menu.click();
+          const handles=await driver.getAllWindowHandles();
+          await driver.switchTo().window(original);
+          await wait(async () => await ui.eval(() => document.querySelector('#conversation-navigator-root').shadowRoot.querySelector('.panel').hidden), 'Firefox GM menu');
+          await ui.click('#expand');
+          for(const handle of handles.filter(handle=>handle!==original)){await driver.switchTo().window(handle);await driver.close();}
+          await driver.switchTo().window(original);
+          return;
+        }
         const contentHandle = await driver.getWindowHandle();
         await driver.switchTo().newWindow('tab');
         await driver.get(`moz-extension://${extensionUUID}/popup.html`);
@@ -472,6 +521,7 @@ if (browserList.includes('firefox')) {
 report.finished = new Date().toISOString(); report.passed = failures.length === 0;
 report.extensionRoot = extensionRoot;
 report.bundleSHA256 = Object.fromEntries(await Promise.all(['chrome/content.js', 'chrome/manifest.json', 'firefox/content.js', 'firefox/manifest.json'].map(async file => [`dist/${file}`, createHash('sha256').update(await readFile(path.join(extensionRoot, file))).digest('hex')])));
+if (userscriptMode) report.userscriptSHA256 = createHash('sha256').update(await readFile('dist/userscript/chatgpt-conversation-navigator.user.js')).digest('hex');
 await writeFile(reportPath, JSON.stringify(report, null, 2));
 console.log(`Report: ${reportPath}`);
 if (failures.length) process.exitCode = 1;

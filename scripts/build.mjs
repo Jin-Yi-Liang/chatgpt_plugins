@@ -37,3 +37,4 @@ for (const browser of ['chrome', 'firefox']) {
   await copyFile(path.join(root, 'LICENSE'), path.join(outdir, 'LICENSE'));
 }
 console.log('Built dist/chrome and dist/firefox');
+await import('./build-userscript.mjs');

@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-conversation-navigator",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "ChatGPT question navigation and selected answer Markdown export for Chrome and Firefox",
@@ -9,7 +9,11 @@
     "test": "npm run build && node tests/run.mjs",
     "test:live": "node tests/live.mjs",
     "lint": "web-ext lint --source-dir dist/firefox --warnings-as-errors",
-    "package": "npm run build && node scripts/package.mjs"
+    "package": "npm run build && node scripts/package.mjs",
+    "build:userscript": "node scripts/build-userscript.mjs",
+    "test:userscript": "npm run build && npm run prepare:tampermonkey && TEST_RUNTIME=tampermonkey node tests/run.mjs",
+    "prepare:tampermonkey": "node scripts/prepare-tampermonkey.mjs",
+    "check:userscript": "node scripts/check-userscript.mjs"
   },
   "dependencies": {
     "turndown": "^7.2.2",
