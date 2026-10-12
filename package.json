@@ -1,0 +1,24 @@
+{
+  "name": "chatgpt-conversation-navigator",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "description": "ChatGPT question navigation and selected answer Markdown export for Chrome and Firefox",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node tests/run.mjs",
+    "test:live": "node tests/live.mjs",
+    "lint": "web-ext lint --source-dir dist/firefox --warnings-as-errors",
+    "package": "npm run build && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "turndown": "^7.2.2",
+    "turndown-plugin-gfm": "^1.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright": "^1.58.0",
+    "selenium-webdriver": "^4.29.0",
+    "web-ext": "^9.0.0"
+  }
+}
