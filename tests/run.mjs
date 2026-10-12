@@ -10,9 +10,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { modernConversation } from './modern-fixture.mjs';
+import { scrollConversation, virtualConversation } from './scroll-fixture.mjs';
 
 const root = process.cwd();
-const artifactDir = path.join(root, 'artifacts/tests');
+const artifactDir = path.resolve(process.env.TEST_ARTIFACT_DIR || path.join(root, 'artifacts/tests'));
+const extensionRoot = path.resolve(process.env.TEST_EXTENSION_ROOT || path.join(root, 'dist'));
 await mkdir(artifactDir, { recursive: true });
 const report = { started: new Date().toISOString(), scope: 'Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.', browsers: [] };
 const reportPath = path.join(artifactDir, 'report.json');
@@ -38,6 +40,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
+  if (!process.env.TEST_ONLY_NAVIGATION) {
   await ui.goto('/c/fixture-primary');
   await check('真实扩展注入、导航提问与隐藏分支过滤', async () => {
     await wait(async () => await rows() === 3, 'three visible user turns');
@@ -213,10 +216,130 @@ async function sharedTests(ui, entry) {
     }
   });
   await check('工具栏弹出页渲染与内容脚本消息开关', async () => { await ui.popup(); });
+  }
+  const offset = index => ui.eval(index => {
+    const scroller = document.querySelector('.thread-scroll-container');
+    const target = document.querySelector(`[data-turn-key="scroll-${index}"] [data-user-message-bubble]`);
+    return target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - scroller.clientTop;
+  }, index);
+  await check('单击跳转：DOM 同键重建后仍定位当前节点', async () => {
+    await ui.goto('/c/fixture-scroll-reverse'); await wait(async () => await rows() === 12, 'scroll turns');
+    await ui.eval(() => { const target = document.querySelector('[data-turn-key="scroll-1"] [data-user-message-bubble]'); target.replaceWith(target.cloneNode(true)); });
+    await pause(350);
+    await ui.click('.row[data-key="id:scroll-1"] .jump');
+    assert.ok(Math.abs(await offset(1) - 24) <= 3, 'one native click immediately aligns the current node');
+    assert.equal(await ui.eval(() => window.navigationClicks), 1);
+  });
+  await check('单击跳转：正向和反向长列表逐项定位无需补点', async () => {
+    entry.navigationSamples = [];
+    for (const layout of ['normal', 'reverse']) {
+      await ui.goto(`/c/fixture-scroll-${layout}`); await wait(async () => await rows() === 12, 'scroll list');
+      for (const index of [1, 9, 3, 12, 6, 2]) {
+        const before = await ui.eval(() => window.navigationClicks);
+        await ui.click(`.row[data-key="id:scroll-${index}"] .jump`);
+        const immediate = await offset(index);
+        assert.ok(Math.abs(immediate - 24) <= 3, `${layout} question ${index} immediate offset ${immediate}`);
+        await pause(1200);
+        const settled = await offset(index);
+        assert.ok(Math.abs(settled - 24) <= 3, `${layout} question ${index} settled offset ${settled}`);
+        assert.equal(await ui.eval(() => window.navigationClicks), before + 1);
+        entry.navigationSamples.push({ layout, index, clicks: 1, immediateOffset: immediate, settledOffset: settled });
+      }
+    }
+  });
+  await check('单击跳转：延迟重排与节点替换后自动校正', async () => {
+    await ui.goto('/c/fixture-scroll-reverse'); await wait(async () => await rows() === 12, 'late layout');
+    await ui.eval(() => window.armLayoutChange(7));
+    await ui.click('.row[data-key="id:scroll-7"] .jump');
+    assert.ok(Math.abs(await offset(7) - 24) <= 3);
+    await pause(1400); assert.ok(Math.abs(await offset(7) - 24) <= 3);
+    assert.equal(await ui.eval(() => window.navigationClicks), 1);
+    await ui.click('.row[data-key="id:scroll-2"] .jump');
+    await ui.click('.row[data-key="id:scroll-10"] .jump');
+    await pause(1200); assert.ok(Math.abs(await offset(10) - 24) <= 3, 'latest click wins');
+    await ui.screenshot(path.join(artifactDir, `${entry.browser}-single-click.png`));
+  });
+  await check('窗口化会话：自动发现所有提问并恢复原滚动位置', async () => {
+    await ui.goto('/c/fixture-virtual');
+    await wait(async () => await ui.eval(() => document.querySelector('#conversation-navigator-root')?.dataset.discovery) === 'complete', 'full discovery');
+    assert.equal(await rows(), 16);
+    assert.equal(await title(0), '第 1 个窗口化提问：项目应保留并能选择删除');
+    assert.equal(await title(15), '第 16 个窗口化提问：项目应保留并能选择删除');
+    assert.ok(await ui.eval(() => document.querySelectorAll('[data-user-message-bubble]').length) < 16);
+    assert.ok(Math.abs(await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop)) < 2);
+  });
+  await check('窗口化会话：未渲染项目单击定位且目录不丢项', async () => {
+    for (const index of [1, 12, 5, 16]) {
+      const before = await ui.eval(() => window.navigationClicks);
+      await ui.click(`.row[data-key="id:virtual-${index}"] .jump`);
+      await wait(async () => await ui.eval(index => {
+        const target = document.querySelector(`[data-turn-key="virtual-${index}"] [data-user-message-bubble]`);
+        if (!target) return false;
+        const s = document.querySelector('.thread-scroll-container');
+        return Math.abs(target.getBoundingClientRect().top - s.getBoundingClientRect().top - s.clientTop - 16) <= 3;
+      }, index), 'virtualized single-click navigation');
+      await pause(1100); assert.equal(await rows(), 16);
+      assert.equal(await ui.eval(() => window.navigationClicks), before + 1);
+    }
+  });
+  await check('导航真实滚轮：上下滚动和边界不带动会话页面', async () => {
+    await shadow(root => { root.querySelector('.list').scrollTop = 0; });
+    const before = await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop);
+    await ui.wheel('.list', 650);
+    await wait(async () => await shadow(root => root.querySelector('.list').scrollTop) > 100, 'real wheel scrolls navigation');
+    assert.ok(Math.abs(await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop) - before) < 2);
+    await ui.wheel('.list', -1500); await wait(async () => await shadow(root => root.querySelector('.list').scrollTop) === 0, 'wheel up');
+    await ui.wheel('.list', -700); assert.ok(Math.abs(await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop) - before) < 2);
+    assert.equal(await rows(), 16);
+  });
+  await check('回复 H1 子导航：默认关闭、只读、定位和收起', async () => {
+    assert.equal(await shadow(root => root.querySelectorAll('.heading-jump').length), 0);
+    await ui.click('.row[data-key="id:virtual-3"] .heading-toggle');
+    assert.equal(await shadow(root => root.querySelector('.row[data-key="id:virtual-3"] .heading-list').querySelectorAll('.heading-jump').length), 2);
+    assert.equal(await shadow(root => root.querySelectorAll('.heading-list .edit, .heading-list .delete, .heading-list input').length), 0);
+    assert.ok(!await shadow(root => root.querySelector('.heading-list').textContent.includes('二级标题')));
+    await ui.click('.row[data-key="id:virtual-3"] .heading-jump:nth-child(1)');
+    await wait(async () => await ui.eval(() => {
+      const h = document.querySelector('[data-turn-key="virtual-3"] h1'); if(!h)return false;
+      const s = document.querySelector('.thread-scroll-container'); return Math.abs(h.getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop-16)<=3;
+    }), 'H1 navigation');
+    await pause(1100);
+    await ui.click('.row[data-key="id:virtual-3"] .heading-jump:nth-child(2)');
+    await wait(async () => await ui.eval(() => {
+      const h = document.querySelectorAll('[data-turn-key="virtual-3"] h1')[1]; if(!h)return false;
+      const s = document.querySelector('.thread-scroll-container'); return Math.abs(h.getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop-16)<=3;
+    }), 'second H1 navigation');
+    await ui.click('.row[data-key="id:virtual-3"] .heading-toggle');
+    assert.equal(await shadow(root => root.querySelectorAll('.heading-jump').length), 0);
+  });
+  await check('删除导航：不删原始消息、不被重新发现、刷新保留', async () => {
+    await ui.click('#select-all'); await ui.click('.row[data-key="id:virtual-3"] .delete');
+    assert.equal(await rows(), 15); assert.equal(await shadow(root => root.querySelector('#selected-count').textContent), '已选 15');
+    assert.ok(await ui.eval(() => !!document.querySelector('[data-turn-key="virtual-3"]')));
+    assert.equal(await shadow(root => !!root.querySelector('.row[data-key="id:virtual-3"]')), false);
+    const md = await ui.download(); assert.ok(!md.includes('窗口化回复 3\n')); assert.ok(md.includes('窗口化回复 1'));
+    await ui.reload(); await wait(async () => await ui.eval(() => document.querySelector('#conversation-navigator-root')?.dataset.discovery) === 'complete', 'reload discovery');
+    assert.equal(await rows(), 15); assert.equal(await shadow(root => !!root.querySelector('.row[data-key="id:virtual-3"]')), false);
+    assert.equal(await shadow(root => root.querySelectorAll('.heading-jump').length), 0);
+    await ui.goto('/c/fixture-virtual-other'); await wait(async () => await rows() === 16, 'deletion per conversation');
+    await ui.screenshot(path.join(artifactDir, `${entry.browser}-navigation-full.png`));
+  });
+  await check('定位过程中用户手动滚动可接管控制', async () => {
+    await ui.goto('/c/fixture-scroll-reverse'); await wait(async () => await rows() === 12, 'user control');
+    await ui.click('.row[data-key="id:scroll-5"] .jump');
+    const before = await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop);
+    await ui.manualScroll(); await pause(600);
+    const manual = await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop);
+    assert.ok(Math.abs(manual - before) > 20, 'real scroll key moves the conversation');
+    await pause(700);
+    assert.ok(Math.abs(await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop) - manual) < 2, 'navigator does not pull the user back');
+  });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-modern') ? modernConversation
+const htmlFor = url => url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))
+  : url.includes('fixture-virtual') ? virtualConversation()
+  : url.includes('fixture-modern') ? modernConversation
   : url.includes('fixture-contents') ? fallbackConversation.replaceAll('<article ', '<article style="display:contents" ')
   : url.includes('fixture-outside-main') ? fallbackConversation.replace('<main>', '<section>').replace('</main>', '</section>')
   : url.includes('fixture-fallback') ? fallbackConversation : conversation;
@@ -226,7 +349,7 @@ if (browserList.includes('chromium')) {
   const profile = await mkdtemp(path.join(tmpdir(), 'navigator-chromium-'));
   let context;
   try {
-    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${path.join(root, 'dist/chrome')}`, `--load-extension=${path.join(root, 'dist/chrome')}`] });
+    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${path.join(extensionRoot, 'chrome')}`, `--load-extension=${path.join(extensionRoot, 'chrome')}`] });
     entry.engine = context.browser()?.version();
     await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: htmlFor(route.request().url()) }));
     const page = await context.newPage();
@@ -240,6 +363,8 @@ if (browserList.includes('chromium')) {
       resize: (width, height) => page.setViewportSize({ width, height }),
       screenshot: file => page.screenshot({ path: file }),
       shortcut: () => page.keyboard.press('Alt+Shift+N'),
+      manualScroll: () => page.locator('.thread-scroll-container').press('PageDown'),
+      async wheel(selector, delta) { const rect = await page.locator(`#conversation-navigator-root ${selector}`).boundingBox(); await page.mouse.move(rect.x + rect.width/2, rect.y + rect.height/2); await page.mouse.wheel(0, delta); },
       async paste() { await page.locator('#paste-target').fill(''); await page.locator('#paste-target').focus(); await page.keyboard.press('Control+V'); return page.locator('#paste-target').inputValue(); },
       async download() { const [download] = await Promise.all([page.waitForEvent('download'), ui.click('#export')]); const file = await download.path(); assert.ok(download.suggestedFilename().endsWith('.md')); return readFile(file, 'utf8'); },
       async popup() {
@@ -276,7 +401,7 @@ if (browserList.includes('firefox')) {
   let driver, server;
   try {
     const downloadDir = path.join(scratch, 'downloads'); await mkdir(downloadDir);
-    const addonDir = path.join(scratch, 'addon'); await cp(path.join(root, 'dist/firefox'), addonDir, { recursive: true });
+    const addonDir = path.join(scratch, 'addon'); await cp(path.join(extensionRoot, 'firefox'), addonDir, { recursive: true });
     const manifest = JSON.parse(await readFile(path.join(addonDir, 'manifest.json')));
     manifest.host_permissions.push('http://chatgpt.com/*'); manifest.content_scripts[0].matches.push('http://chatgpt.com/*');
     await writeFile(path.join(addonDir, 'manifest.json'), JSON.stringify(manifest));
@@ -309,6 +434,11 @@ if (browserList.includes('firefox')) {
       resize: (width, height) => driver.manage().window().setRect({ width, height }),
       screenshot: async file => writeFile(file, await driver.takeScreenshot(), 'base64'),
       shortcut: async () => (await driver.findElement(By.css('body'))).sendKeys(Key.chord(Key.ALT, Key.SHIFT, 'n')),
+      manualScroll: async () => (await driver.findElement(By.css('.thread-scroll-container'))).sendKeys(Key.PAGE_DOWN),
+      async wheel(selector, delta) {
+        const point = await driver.executeScript('const r=document.querySelector("#conversation-navigator-root").shadowRoot.querySelector(arguments[0]).getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}', selector);
+        await driver.actions({async:true}).scroll(point.x,point.y,0,delta).perform();
+      },
       async paste() { const el = await driver.findElement(By.id('paste-target')); await el.clear(); await el.sendKeys(Key.chord(Key.CONTROL, 'v')); return el.getAttribute('value'); },
       async download() {
         const { readdir } = await import('node:fs/promises');
@@ -340,7 +470,8 @@ if (browserList.includes('firefox')) {
   finally { await driver?.quit(); if (server) await new Promise(resolve => server.close(resolve)); await rm(scratch, { recursive: true, force: true }); }
 }
 report.finished = new Date().toISOString(); report.passed = failures.length === 0;
-report.bundleSHA256 = Object.fromEntries(await Promise.all(['dist/chrome/content.js', 'dist/chrome/manifest.json', 'dist/firefox/content.js', 'dist/firefox/manifest.json'].map(async file => [file, createHash('sha256').update(await readFile(file)).digest('hex')])));
+report.extensionRoot = extensionRoot;
+report.bundleSHA256 = Object.fromEntries(await Promise.all(['chrome/content.js', 'chrome/manifest.json', 'firefox/content.js', 'firefox/manifest.json'].map(async file => [`dist/${file}`, createHash('sha256').update(await readFile(path.join(extensionRoot, file))).digest('hex')])));
 await writeFile(reportPath, JSON.stringify(report, null, 2));
 console.log(`Report: ${reportPath}`);
 if (failures.length) process.exitCode = 1;
