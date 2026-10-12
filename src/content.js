@@ -3,6 +3,9 @@ import { findAdapter } from './platforms.js';
 import { selectedMarkdown } from './markdown.js';
 import { readStorage, writeStorage, extensionAPI } from './storage.js';
 import { version } from '../package.json';
+import { createNavigation } from './navigation.js';
+import { createInventory } from './inventory.js';
+import { createDiscovery, needsDiscovery } from './discovery.js';
 
 const adapter = findAdapter(location);
 if (adapter && !document.getElementById('conversation-navigator-root')) start();
@@ -18,7 +21,7 @@ async function start() {
       <div class="search"><input id="search" type="search" aria-label="搜索提问或自定义标题" placeholder="搜索提问或标题…"></div>
       <div class="selection"><button id="select-all">全选</button><button id="select-visible">选中搜索结果</button><button id="select-none">清空</button><span id="selected-count">已选 0</span></div>
       <div class="list" role="list" aria-label="提问列表"></div>
-      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。仅保存标题与偏好，回复在导出时读取。</p><button id="forget-titles">重置本会话标题</button></div>
+      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
       <div class="footer"><div class="export-buttons"><button class="primary" id="copy" disabled>复制 Markdown</button><button id="export" disabled>导出 .md</button></div><div class="status" role="status" aria-live="polite">勾选问题，按对话顺序合并模型回复。</div></div>
     </aside><button class="launcher" id="expand" hidden aria-label="展开对话导航">≡ 对话导航 <span>0</span></button>`;
   const style = document.createElement('style'); style.textContent = styles; shadow.prepend(style);
@@ -26,7 +29,22 @@ async function start() {
   const $ = selector => shadow.querySelector(selector);
   $('.heading small').textContent = `ChatGPT · v${version}`;
   let settings = { collapsed: false, includeHeadings: false, mode: 'auto' };
-  let turns = [], titles = {}, selected = new Set(), conversation = '', signature = '', editing = null;
+  let turns = [], titles = {}, deleted = new Set(), selected = new Set(), expanded = new Set(), conversation = '', signature = '', editing = null;
+  let inventory = createInventory(), scanned = false;
+  const navigation = createNavigation();
+  const collect = () => adapter.collect(document, settings.mode);
+  function accept(observed) {
+    turns = inventory.merge(observed);
+    const nextSignature = JSON.stringify(turns.map(turn => [turn.key, turn.prompt, turn.answers.length, turn.headings.map(heading => [heading.key, heading.title])]));
+    if (nextSignature !== signature) { signature = nextSignature; render(); }
+    else updateButtons();
+  }
+  const discovery = createDiscovery({ collect, merge: accept, context: () => conversation, onState: (state, scope) => {
+    if (scope !== conversation) return;
+    host.dataset.discovery = state;
+    if (state === 'running') notify('正在整理完整对话目录…');
+    else notify(`已识别 ${turns.filter(turn => !deleted.has(turn.key)).length} 条提问。勾选后可复制或导出回复。`);
+  } });
   let activeKey = '', generation = 0, loaded = false, timer = null, writeQueue = Promise.resolve();
   let lastFirstKey = '';
 
@@ -36,7 +54,7 @@ async function start() {
     writeQueue = writeQueue.catch(() => {}).then(() => writeStorage(key, value));
     writeQueue.catch(reportStorageError);
   }
-  function persist() { if (conversation) enqueueSave(`conversation:${conversation}`, { titles: { ...titles } }); }
+  function persist() { if (conversation) enqueueSave(`conversation:${conversation}`, { titles: { ...titles }, deleted: [...deleted] }); }
   function saveSettings() { enqueueSave('settings', { ...settings }); }
   function collapsed(value) {
     settings.collapsed = value;
@@ -46,7 +64,7 @@ async function start() {
   }
   function matchingTurns() {
     const query = $('#search').value.trim().toLocaleLowerCase();
-    return turns.filter(turn => !query || `${turn.prompt} ${titles[turn.key] || ''}`.toLocaleLowerCase().includes(query));
+    return turns.filter(turn => !deleted.has(turn.key) && (!query || `${turn.prompt} ${titles[turn.key] || ''}`.toLocaleLowerCase().includes(query)));
   }
   function updateButtons() {
     $('#selected-count').textContent = `已选 ${selected.size}`;
@@ -54,12 +72,15 @@ async function start() {
     $('#select-all').disabled = $('#select-visible').disabled = !turns.length;
     $('#select-none').disabled = !selected.size;
   }
-  function jump(turn) {
-    turn.anchor.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
-    activeKey = turn.key;
+  async function jump(key, headingKey = null) {
+    discovery.cancel();
+    // Row listeners keep only the stable key; React may have replaced the original DOM node.
+    accept(collect());
+    const route = location.href;
+    activeKey = key;
     updateActive();
-    // A visual pulse uses the Web Animations API and does not alter site CSS.
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) turn.anchor.animate([{ backgroundColor: '#32a07b33' }, { backgroundColor: 'transparent' }], { duration: 1200 });
+    const result = await navigation.navigate(() => location.href === route && !deleted.has(key) ? inventory.resolve(key, collect, headingKey) : null);
+    if (!result.cancelled && !result.success) notify('该提问尚未完成加载，请稍后再定位。');
   }
   function updateActive() { shadow.querySelectorAll('.row').forEach(row => { row.classList.toggle('active', row.dataset.key === activeKey); row.querySelector('.jump')?.setAttribute('aria-current', row.dataset.key === activeKey ? 'true' : 'false'); }); }
   function beginEdit(row, turn) {
@@ -90,8 +111,9 @@ async function start() {
     const previousScroll = list.scrollTop;
     list.replaceChildren();
     const filtered = matchingTurns();
-    $('.count').textContent = `${turns.length} 条`;
-    $('#expand span').textContent = `${turns.length} 条`;
+    const total = turns.filter(turn => !deleted.has(turn.key)).length;
+    $('.count').textContent = `${total} 条`;
+    $('#expand span').textContent = `${total} 条`;
     if (!filtered.length) {
       const empty = document.createElement('div'); empty.className = 'empty';
       empty.textContent = turns.length ? '没有匹配的提问。' : settings.mode === 'compatibility'
@@ -108,9 +130,23 @@ async function start() {
       const link = document.createElement('button'); link.className = 'jump'; link.title = turn.prompt;
       const title = document.createElement('span'); title.className = 'title'; title.textContent = titles[turn.key] || turn.prompt;
       const meta = document.createElement('span'); meta.className = 'meta'; meta.textContent = `${titles[turn.key] ? '已自定义 · ' : ''}${turn.answers.length ? '模型回复' : '等待回复'}`;
-      link.append(title, meta); link.addEventListener('click', () => jump(turn));
+      link.append(title, meta); link.addEventListener('click', () => jump(turn.key));
       const edit = document.createElement('button'); edit.className = 'edit'; edit.textContent = '✎'; edit.title = '自定义标题'; edit.setAttribute('aria-label', `编辑第 ${index} 条标题`); edit.addEventListener('click', () => beginEdit(row, turn));
-      row.append(checkbox, number, link, edit); list.append(row);
+      const remove = document.createElement('button'); remove.className = 'delete'; remove.textContent = '×'; remove.title = '删除导航项'; remove.setAttribute('aria-label', `删除第 ${index} 条导航`);
+      remove.addEventListener('click', () => { deleted.add(turn.key); selected.delete(turn.key); persist(); render(); notify('已删除该导航项。'); });
+      const toggle = document.createElement('button'); toggle.className = 'heading-toggle'; toggle.textContent = expanded.has(turn.key) ? '▾' : '▸'; toggle.disabled = !turn.headings.length;
+      toggle.title = turn.headings.length ? '展开 / 收起回复一级标题' : '回复暂无一级标题'; toggle.setAttribute('aria-label', `展开第 ${index} 条回复一级标题`); toggle.setAttribute('aria-expanded', String(expanded.has(turn.key)));
+      toggle.addEventListener('click', () => { expanded.has(turn.key) ? expanded.delete(turn.key) : expanded.add(turn.key); render(); });
+      row.append(checkbox, number, link, edit, remove, toggle);
+      if (expanded.has(turn.key)) {
+        const group = document.createElement('div'); group.className = 'heading-list';
+        for (const heading of turn.headings) {
+          const button = document.createElement('button'); button.className = 'heading-jump'; button.textContent = heading.title; button.title = heading.title;
+          button.addEventListener('click', () => jump(turn.key, heading.key)); group.append(button);
+        }
+        row.append(group);
+      }
+      list.append(row);
     }
     list.scrollTop = previousScroll; updateButtons(); updateActive();
   }
@@ -120,8 +156,9 @@ async function start() {
     const nextConversation = adapter.conversationKey(location, next);
     host.toggleAttribute('data-dark', document.documentElement.classList.contains('dark') || document.documentElement.dataset.theme === 'dark');
     if (nextConversation !== conversation) {
-      const previous = conversation, previousTitles = { ...titles }, previousFirst = lastFirstKey;
-      conversation = nextConversation; loaded = false; selected.clear(); editing = null; titles = {}; turns = []; signature = ''; $('#search').value = ''; render();
+      navigation.cancel(); discovery.cancel(); inventory = createInventory(); scanned = false;
+      const previous = conversation, previousTitles = { ...titles }, previousDeleted = new Set(deleted), previousFirst = lastFirstKey;
+      conversation = nextConversation; loaded = false; selected.clear(); expanded.clear(); editing = null; titles = {}; deleted = new Set(); turns = []; signature = ''; host.dataset.discovery = 'idle'; $('#search').value = ''; render();
       const currentGeneration = ++generation;
       // Finish queued saves before a rapid back/forward navigation reads them.
       await writeQueue.catch(() => {});
@@ -129,19 +166,19 @@ async function start() {
       try { stored = await readStorage(`conversation:${conversation}`); } catch (error) { reportStorageError(error); }
       if (currentGeneration !== generation) return;
       titles = stored?.titles && typeof stored.titles === 'object' ? stored.titles : {};
+      deleted = new Set(Array.isArray(stored?.deleted) ? stored.deleted : []);
       // A newly created conversation moves from a draft URL to /c/<id>.
-      if (!stored && previous.includes(':draft:') && !conversation.includes(':draft:') && previousFirst && previousFirst === next[0]?.key) { titles = previousTitles; persist(); }
+      if (!stored && previous.includes(':draft:') && !conversation.includes(':draft:') && previousFirst && previousFirst === next[0]?.key) { titles = previousTitles; deleted = previousDeleted; persist(); }
       loaded = true; activeKey = ''; notify('勾选问题，按对话顺序合并模型回复。');
       next = adapter.collect(document, settings.mode);
       if (adapter.conversationKey(location, next) !== conversation) { schedule(); return; }
     }
     if (!loaded) return;
-    turns = next; lastFirstKey = next[0]?.key || '';
-    const existing = new Set(next.map(turn => turn.key));
-    selected = new Set([...selected].filter(key => existing.has(key)));
-    const nextSignature = JSON.stringify(next.map(turn => [turn.key, turn.prompt, turn.answers.length]));
-    if (nextSignature !== signature) { signature = nextSignature; render(); }
-    else updateButtons();
+    accept(next); lastFirstKey = turns[0]?.key || '';
+    if (!scanned && next.length && needsDiscovery(next)) {
+      scanned = true;
+      discovery.run().catch(error => { console.error('[Conversation Navigator] Discovery', error); notify('目录整理未完成，滚动对话后会继续识别提问。'); });
+    }
   }
   function schedule() { if (!timer) timer = setTimeout(() => { refresh().catch(error => { console.error('[Conversation Navigator]', error); notify('页面读取失败，请刷新页面或尝试兼容模式。'); }); }, 220); }
 
@@ -149,8 +186,9 @@ async function start() {
     const currentTurns = adapter.collect(document, settings.mode);
     if (adapter.conversationKey(location, currentTurns) !== conversation) { schedule(); notify('会话正在切换，请稍后再导出。'); return; }
     const streaming = document.querySelector('[data-testid="stop-button"], button[aria-label="Stop generating"], button[aria-label="停止生成"]');
-    if (streaming && selected.has(currentTurns.at(-1)?.key)) { notify('所选回复正在生成，请等待完成后再导出。'); return; }
-    const result = selectedMarkdown(currentTurns, selected, titles, settings.includeHeadings);
+    if (streaming && selected.has(turns.at(-1)?.key || currentTurns.at(-1)?.key)) { notify('所选回复正在生成，请等待完成后再导出。'); return; }
+    accept(currentTurns);
+    const result = selectedMarkdown(turns, selected, titles, settings.includeHeadings);
     if (result.missing.length) { notify(`有 ${result.missing.length} 条所选提问暂无可导出的回复，请等待或取消勾选。`); return; }
     if (!result.text) { notify('没有可导出的回复，请先勾选已完成的提问。'); return; }
     try {
@@ -181,13 +219,22 @@ async function start() {
   $('#collapse').addEventListener('click', () => collapsed(true)); $('#expand').addEventListener('click', () => collapsed(false));
   $('#settings-toggle').addEventListener('click', () => { const value = !$('.settings').hidden; $('.settings').hidden = value; $('#settings-toggle').setAttribute('aria-expanded', String(!value)); });
   $('#search').addEventListener('input', render);
-  $('#select-all').addEventListener('click', () => { selected = new Set(turns.map(turn => turn.key)); render(); });
+  $('#select-all').addEventListener('click', () => { selected = new Set(turns.filter(turn => !deleted.has(turn.key)).map(turn => turn.key)); render(); });
   $('#select-visible').addEventListener('click', () => { matchingTurns().forEach(turn => selected.add(turn.key)); render(); });
   $('#select-none').addEventListener('click', () => { selected.clear(); render(); });
   $('#include-headings').addEventListener('change', () => { settings.includeHeadings = $('#include-headings').checked; saveSettings(); });
   $('#compatibility').addEventListener('change', () => { settings.mode = $('#compatibility').value; signature = ''; saveSettings(); schedule(); });
   $('#forget-titles').addEventListener('click', () => { titles = {}; persist(); render(); notify('已恢复本会话的原始提问标题。'); });
   $('#copy').addEventListener('click', () => exportText(false)); $('#export').addEventListener('click', () => exportText(true));
+  $('.list').tabIndex = 0;
+  $('.panel').addEventListener('wheel', event => {
+    const editable = event.composedPath().find(node => node.tagName === 'TEXTAREA' || node.tagName === 'SELECT');
+    if (editable) return;
+    const list = $('.list');
+    const scale = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? list.clientHeight : 1;
+    list.scrollTop += event.deltaY * scale;
+    event.preventDefault(); event.stopPropagation();
+  }, { passive: false });
   extensionAPI.runtime.onMessage.addListener(message => { if (message.type === 'conversation-navigator:toggle') collapsed(!settings.collapsed); });
   document.addEventListener('keydown', event => { if (event.altKey && event.shiftKey && event.code === 'KeyN') { event.preventDefault(); collapsed(!settings.collapsed); } });
   let scrollFrame;
@@ -195,11 +242,11 @@ async function start() {
     if (scrollFrame) return;
     scrollFrame = requestAnimationFrame(() => {
       scrollFrame = null;
-      if (!turns.length) return;
+      if (!turns.length || navigation.active || discovery.active) return;
       const boundary = innerHeight / 3;
       let current = turns[0];
       let closest = Infinity;
-      for (const turn of turns) {
+      for (const turn of turns.filter(turn => turn.anchor.isConnected && !deleted.has(turn.key))) {
         const distance = Math.abs(turn.anchor.getBoundingClientRect().top - boundary);
         if (distance < closest) { closest = distance; current = turn; }
       }
