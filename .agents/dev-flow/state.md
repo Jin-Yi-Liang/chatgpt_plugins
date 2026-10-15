@@ -1,7 +1,7 @@
 # Project state
 
 - Workspace: `/home/michael/workspace/project/chatgpt_plugins`.
-- Current request: diagnose/fix Firefox navigation that moves for seconds but stops before the target, test real browsers, commit locally. No publication requested for this new patch.
+- Current request: diagnose/fix Firefox navigation that moves for seconds but stops before the target, test real browsers, commit locally. User subsequently requested directly publishing this patch; the release is now complete.
 - Branch: `fix/navigation-completion`, base `77636be`. Version0.3.3, implementation commit `8171b43`.
 - Root paths: v0.3.2 hard-stopped at2400ms; updated shell geometry ignored after first seek; transiently absent H1 silently cancelled; stability timer did not reset after corrections, letting transient alignment end navigation during site scroll restoration.
 - Fix: pending navigation waits up to12s; follows current shell geometry on retries, retains a pending H1 within a known turn, resets stability on correction/node change/missing layout, requires350ms stability and true endpoint checks. UI reports waiting/success/cancel/failure. Full missing-target recollection throttled150ms; geometry checks remain50ms. User actions/new clicks still cancel promptly.
@@ -9,5 +9,6 @@
 - Verification: native37 Chromium +37 Firefox, actual official Tampermonkey37 Chromium +37 Firefox =148/148. Engines156.0.8078.4 /157.0, managers5.5.1 /5.5.0. New scenarios:3400ms delay, moving shell80000px with1500ms mount, H1 staged800ms, 1900ms scroll restoration. Firefox TM final offsets16/16/15.817/24.40px, one click each. Existing33 groups and126 differential windows retained. web-ext lint0/0/0, userscript checks passed.
 - Production outputs: artifacts/packages/conversation-navigator-0.3.3.user.js and Chrome/Firefox ZIPs. Script63819bytes, SHA256570dc02431c0ddebaab1fd4325634d33da1b44d8be415380e8a34e55eb614c33. Package content hashes match tested files.
 - Docs: docs/verification-0.3.3.md/.json and README cover reproduction, actual results, bounded wait and local update. Test data is synthetic; no private Firefox session operated.
-- Public version remains Greasy Fork0.3.2, entry600317. tests/published-release.json and public description intentionally still refer to0.3.2. Previous0.3.2 publication/upgrade evidence is in docs/verification-0.3.2.json. Do not call0.3.3 published.
-- Delivery: local Git commits only; no GitHub push/main merge/Greasy Fork update in this task. Report package and commit(s); user should update existing local script and refresh to run0.3.3. Future publishing requires a release request.
+- Public release: Greasy Fork0.3.3, same entry600317. tests/published-release.json and description updated. Online full SHA25643744ea1f37cd7fc09f023eedd8876832fa03c4fd9f9e5c02c5645ab93de746f; body SHA2560b46fbbe92dcc4c64227f7ec1ac55daaf885529f82974e84e29fb544b44f5b26. Removing only GF downloadURL/updateURL lines yields the exact tested local file.
+- Public release checks passed: actual Chrome upgrade0.3.2 ->0.3.3 retained custom title/deletion and navigation; Firefox actual public install/dashboard0.3.3 passed. Evidence artifacts/publication-0.3.3/ and docs/verification-0.3.3.json publication field. Test harness now reads the old version from supplied script metadata instead of hardcoding0.3.1.
+- Delivery: Greasy Fork update complete; source/release evidence committed locally. No GitHub push/main merge. User can update existing script online and refresh ChatGPT; panel should show0.3.3.

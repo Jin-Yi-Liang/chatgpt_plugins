@@ -48,7 +48,7 @@ web-ext lint 为 0 错误、0 通知、0 警告；userscript 元信息与隔离�
 
 ## 交付与复现
 
-本轮为本地 v0.3.3，**Greasy Fork 公开版本仍为 v0.3.2**。文件：
+**v0.3.3 已于2026-10-15更新到 Greasy Fork 原条目**：[公开安装 / 更新页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)。线上文件与测试文件一致，平台仅补入下载和更新地址。文件：
 
 ```text
 artifacts/packages/conversation-navigator-0.3.3.user.js
@@ -62,7 +62,11 @@ artifacts/packages/conversation-navigator-firefox-0.3.3.zip
 570dc02431c0ddebaab1fd4325634d33da1b44d8be415380e8a34e55eb614c33
 ```
 
-发布包的主体、manifest 和 userscript 哈希已与本轮测试输出核对。更新现有油猴条目到本地完整 v0.3.3 后，刷新 ChatGPT 并检查面板版本。
+发布包的主体、manifest 和 userscript 哈希已与本轮测试输出核对。从公开脚本页或油猴管理面板更新到 v0.3.3 后，刷新 ChatGPT 并检查面板版本。
+
+发布后已从公开页验证 Chrome 的 v0.3.2 → v0.3.3 升级：旧版保存的自定义标题及删除状态保留，刷新受控 HTTPS 会话后新版跳转通过。Firefox 的公开安装和管理器版本核验通过。发布检查不重复计入148组功能验收，也不声称操作过用户私人 Firefox 会话。
+
+线上完整 SHA-256 为 `43744ea1f37cd7fc09f023eedd8876832fa03c4fd9f9e5c02c5645ab93de746f`；主体 SHA-256 为 `0b46fbbe92dcc4c64227f7ec1ac55daaf885529f82974e84e29fb544b44f5b26`。去掉平台补入的下载 / 更新元信息后，线上文件与本地文件完全一致。
 
 完整命令及浏览器准备见 README。仅定位新增场景时可用：
 

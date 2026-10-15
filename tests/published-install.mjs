@@ -38,13 +38,17 @@ try {
   await page.goto(`chrome-extension://${chromeManagerId}/options.html`);
   await page.getByText('Utilities', { exact: true }).waitFor();
   let upgradedContent = null;
+  let upgradeFromVersion = null;
   if (process.env.PUBLICATION_UPGRADE_FROM) {
+    const previousCode = await readFile(process.env.PUBLICATION_UPGRADE_FROM, 'utf8');
+    upgradeFromVersion = previousCode.match(/^\/\/\s+@version\s+(\S+)/m)?.[1];
+    assert.ok(upgradeFromVersion, 'old release version metadata');
     await installChromeScript(context, page, path.resolve(process.env.PUBLICATION_UPGRADE_FROM));
     await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: conversation }));
     upgradedContent = await context.newPage();
     await upgradedContent.goto('https://chatgpt.com/c/public-install-smoke');
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'old release runs before upgrade');
-    assert.equal(await upgradedContent.locator('#conversation-navigator-root').getAttribute('data-version'), '0.3.1');
+    assert.equal(await upgradedContent.locator('#conversation-navigator-root').getAttribute('data-version'), upgradeFromVersion);
     await upgradedContent.locator('#conversation-navigator-root .row[data-key="id:user-1"] .edit').click();
     await upgradedContent.locator('#conversation-navigator-root .editor textarea').fill('升级后应保留的标题');
     await upgradedContent.locator('#conversation-navigator-root [data-edit="save"]').click();
@@ -79,7 +83,7 @@ try {
   await until(() => content.evaluate(() => document.querySelector('[data-message-id="user-3"]').getBoundingClientRect().top < innerHeight), 'public Chrome navigation');
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
     productionHTTPSFixture: 'Actual navigation click passed',
-    upgrade: upgradedContent ? { from: '0.3.1', to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
+    upgrade: upgradedContent ? { from: upgradeFromVersion, to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];
   for (const [index, tab] of (context?.pages() || []).entries()) {

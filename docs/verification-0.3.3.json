@@ -1566,8 +1566,51 @@
   },
   "delivery": {
     "local": true,
-    "published": false,
-    "greasyForkVersion": "0.3.2"
+    "published": true,
+    "greasyForkVersion": "0.3.3"
   },
-  "scope": "Actual Chrome/Firefox and official Tampermonkey using controlled asynchronous fixtures, not direct acceptance of the private Firefox session"
+  "scope": "Actual Chrome/Firefox and official Tampermonkey using controlled asynchronous fixtures, not direct acceptance of the private Firefox session",
+  "publication": {
+    "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+    "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+    "version": "0.3.3",
+    "date": "2026-10-15",
+    "localSHA256": "570dc02431c0ddebaab1fd4325634d33da1b44d8be415380e8a34e55eb614c33",
+    "onlineSHA256": "43744ea1f37cd7fc09f023eedd8876832fa03c4fd9f9e5c02c5645ab93de746f",
+    "bodySHA256": "0b46fbbe92dcc4c64227f7ec1ac55daaf885529f82974e84e29fb544b44f5b26",
+    "mainCodeIdentical": true,
+    "onlyGeneratedMetadataDiff": true,
+    "generatedMetadata": [
+      "// @downloadURL https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "// @updateURL https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.meta.js"
+    ],
+    "installation": {
+      "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+      "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "version": "0.3.3",
+      "browsers": [
+        {
+          "browser": "chromium",
+          "engine": "156.0.8078.4",
+          "publicInstall": true,
+          "dashboardVersion": "0.3.3",
+          "productionHTTPSFixture": "Actual navigation click passed",
+          "upgrade": {
+            "from": "0.3.2",
+            "to": "0.3.3",
+            "customTitlePreserved": true,
+            "deletionPreserved": true
+          }
+        },
+        {
+          "browser": "firefox",
+          "engine": "157.0",
+          "publicInstall": true,
+          "dashboardVersion": "0.3.3",
+          "scope": "Public page -> actual Tampermonkey install -> installed dashboard; no signed-in ChatGPT claim"
+        }
+      ],
+      "passed": true
+    }
+  }
 }
