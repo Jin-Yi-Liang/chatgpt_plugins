@@ -3,49 +3,127 @@ import { hash } from './platforms.js';
 
 function headings(answers, old = []) {
   const counts = new Map();
+  const previous = new Map(old.map(item => [item.key, item]));
   return answers.flatMap(answer => [...answer.querySelectorAll('h1')]).filter(node => !node.closest('[data-testid*="reasoning"], [data-testid*="thinking"], [hidden], [aria-hidden="true"]')).map(anchor => {
     const title = anchor.textContent.replace(/\s+/g, ' ').trim();
     const fingerprint = hash(title);
     const index = counts.get(fingerprint) || 0; counts.set(fingerprint, index + 1);
     const key = `heading:${fingerprint}:${index}`;
-    return { key, title, anchor, hint: positionHint(anchor) || old.find(item => item.key === key)?.hint };
+    return { key, title, anchor, hint: positionHint(anchor) || previous.get(key)?.hint };
   });
+}
+
+// Link new keys in one pass, preserving insertion beside the nearest known turn.
+function insertNewKeys(order, entries, turns) {
+  if (turns.every(turn => entries.has(turn.key))) return false;
+  const next = new Map();
+  const before = new Map();
+  let previous = null;
+  for (const key of order) {
+    before.set(key, previous);
+    if (previous !== null) next.set(previous, key);
+    next.set(key, null); previous = key;
+  }
+  let first = order[0] ?? null;
+  const firstKnown = turns.find(turn => entries.has(turn.key));
+  previous = firstKnown ? before.get(firstKnown.key) : previous;
+  for (const { key } of turns) {
+    if (!next.has(key)) {
+      next.set(key, previous === null ? first : next.get(previous));
+      if (previous === null) first = key;
+      else next.set(previous, key);
+    }
+    previous = key;
+  }
+  const result = [];
+  for (let key = first; key !== null; key = next.get(key)) result.push(key);
+  order.splice(0, order.length, ...result);
+  return true;
+}
+
+function sortOrder(order, entries, following) {
+  const degree = new Map(order.map(key => [key, 0]));
+  for (const links of following.values()) for (const key of links) if (degree.has(key)) degree.set(key, degree.get(key) + 1);
+  // A stable heap avoids repeatedly sorting and shifting a large disconnected queue.
+  const pending = [];
+  let sequence = 0;
+  const before = (a, b) => {
+    const delta = a.top - b.top;
+    return delta < 0 || (!delta && a.sequence < b.sequence);
+  };
+  function enqueue(key) {
+    const item = { key, top: entries.get(key).hint?.top ?? Infinity, sequence: sequence++ };
+    let index = pending.length;
+    pending.push(item);
+    while (index > 0) {
+      const parent = (index - 1) >> 1;
+      if (!before(item, pending[parent])) break;
+      pending[index] = pending[parent]; index = parent;
+    }
+    pending[index] = item;
+  }
+  function dequeue() {
+    const first = pending[0];
+    const last = pending.pop();
+    if (pending.length) {
+      let index = 0;
+      while (index * 2 + 1 < pending.length) {
+        let child = index * 2 + 1;
+        if (child + 1 < pending.length && before(pending[child + 1], pending[child])) child++;
+        if (!before(pending[child], last)) break;
+        pending[index] = pending[child]; index = child;
+      }
+      pending[index] = last;
+    }
+    return first.key;
+  }
+  for (const key of order) if (degree.get(key) === 0) enqueue(key);
+  const sorted = [];
+  while (pending.length) {
+    const key = dequeue(); sorted.push(key);
+    for (const next of following.get(key) || []) {
+      degree.set(next, degree.get(next) - 1);
+      if (degree.get(next) === 0) enqueue(next);
+    }
+  }
+  if (sorted.length === order.length) order.splice(0, order.length, ...sorted);
 }
 
 export function createInventory() {
   const entries = new Map();
   const order = [];
   const following = new Map();
-  let mounted = [];
+  const indices = new Map();
+  let mountedStart = Infinity;
+  let mountedEnd = -Infinity;
   function merge(turns) {
-    mounted = turns.map(turn => turn.key);
+    let structureChanged = insertNewKeys(order, entries, turns);
     for (let i = 0; i < turns.length; i++) {
       const turn = turns[i];
       const old = entries.get(turn.key);
-      if (!old) {
-        const following = turns.slice(i + 1).find(next => entries.has(next.key));
-        const previous = turns.slice(0, i).reverse().find(next => entries.has(next.key));
-        const index = previous ? order.indexOf(previous.key) + 1 : following ? order.indexOf(following.key) : order.length;
-        order.splice(index, 0, turn.key);
-      }
       entries.set(turn.key, { ...turn, answers: turn.answers.length ? turn.answers : old?.answers || [], hint: positionHint(turn.anchor) || old?.hint });
       const entry = entries.get(turn.key);
       entry.headings = headings(entry.answers, old?.headings);
     }
-    for (let i = 0; i < mounted.length - 1; i++) {
-      if (!following.has(mounted[i])) following.set(mounted[i], new Set());
-      following.get(mounted[i]).add(mounted[i + 1]);
+    for (let i = 0; i < turns.length - 1; i++) {
+      const key = turns[i].key, next = turns[i + 1].key;
+      if (!following.has(key)) following.set(key, new Set());
+      if (!following.get(key).has(next)) {
+        following.get(key).add(next);
+        structureChanged = true;
+      }
     }
-    const degree = new Map(order.map(key => [key, 0]));
-    for (const links of following.values()) for (const key of links) if (degree.has(key)) degree.set(key, degree.get(key) + 1);
-    const pending = order.filter(key => degree.get(key) === 0);
-    const sorted = [];
-    while (pending.length) {
-      pending.sort((a,b) => (entries.get(a).hint?.top ?? Infinity) - (entries.get(b).hint?.top ?? Infinity));
-      const key = pending.shift(); sorted.push(key);
-      for (const next of following.get(key) || []) { degree.set(next, degree.get(next) - 1); if (degree.get(next) === 0) pending.push(next); }
+    // Streamed text and replaced DOM nodes still refresh above; only ordering is cached.
+    if (structureChanged) {
+      sortOrder(order, entries, following);
+      order.forEach((key, index) => indices.set(key, index));
     }
-    if (sorted.length === order.length) order.splice(0, order.length, ...sorted);
+    mountedStart = Infinity; mountedEnd = -Infinity;
+    for (const { key } of turns) {
+      const index = indices.get(key);
+      mountedStart = Math.min(mountedStart, index);
+      mountedEnd = Math.max(mountedEnd, index);
+    }
     return all();
   }
   function all() { return order.map(key => entries.get(key)); }
@@ -58,9 +136,8 @@ export function createInventory() {
       target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
     }
     if (!target) return null;
-    const index = order.indexOf(key);
-    const indices = mounted.map(id => order.indexOf(id)).filter(i => i >= 0);
-    const direction = indices.length ? index < Math.min(...indices) ? -1 : index > Math.max(...indices) ? 1 : 0 : 0;
+    const index = indices.get(key);
+    const direction = mountedStart === Infinity ? 0 : index < mountedStart ? -1 : index > mountedEnd ? 1 : 0;
     return { anchor: target.anchor?.isConnected && target.anchor.getClientRects().length ? target.anchor : null, hint: target.hint ? { ...target.hint, direction } : entry.hint ? { ...entry.hint, direction } : null };
   }
   return { merge, all, resolve };

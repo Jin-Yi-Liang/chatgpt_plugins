@@ -19,8 +19,10 @@ async function start() {
   shadow.innerHTML = `
     <aside class="panel" aria-label="ChatGPT 对话导航">
       <div class="header"><div class="brand" aria-hidden="true">≡</div><div class="heading"><strong>对话导航</strong><small>ChatGPT · 按提问浏览</small></div><span class="count">0</span><button class="icon" id="settings-toggle" aria-label="设置" aria-expanded="false">⚙</button><button class="icon" id="collapse" aria-label="收起导航">−</button></div>
-      <div class="search"><input id="search" type="search" aria-label="搜索提问或自定义标题" placeholder="搜索提问或标题…"></div>
+      <div class="search"><input id="search" type="search" aria-label="搜索提问或自定义标题" placeholder="搜索提问或标题…"><button id="clear-search" aria-label="清空搜索" title="清空搜索" hidden>×</button></div>
       <div class="selection"><button id="select-all">全选</button><button id="select-visible">选中搜索结果</button><button id="select-none">清空</button><span id="selected-count">已选 0</span></div>
+      <div class="list-tools"><span id="results-count">共 0 条</span><button id="locate-current" title="在目录中显示当前提问">当前提问</button></div>
+      <div id="selection-hint" class="selection-hint" hidden></div>
       <div class="list" role="list" aria-label="提问列表"></div>
       <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
       <div class="footer"><div class="export-buttons"><button class="primary" id="copy" disabled>复制 Markdown</button><button id="export" disabled>导出 .md</button></div><div class="status" role="status" aria-live="polite">勾选问题，按对话顺序合并模型回复。</div></div>
@@ -32,6 +34,8 @@ async function start() {
   let settings = { collapsed: false, includeHeadings: false, mode: 'auto' };
   let turns = [], titles = {}, deleted = new Set(), selected = new Set(), expanded = new Set(), conversation = '', signature = '', editing = null;
   let inventory = createInventory(), scanned = false;
+  const rowCache = new Map();
+  let panelReturnFocus = null;
   const navigation = createNavigation();
   const collect = () => adapter.collect(document, settings.mode);
   function accept(observed) {
@@ -58,21 +62,35 @@ async function start() {
   function persist() { if (conversation) enqueueSave(`conversation:${conversation}`, { titles: { ...titles }, deleted: [...deleted] }); }
   function saveSettings() { enqueueSave('settings', { ...settings }); }
   function collapsed(value) {
+    if (value && $('.panel').contains(shadow.activeElement)) panelReturnFocus = shadow.activeElement;
     settings.collapsed = value;
     $('.panel').hidden = value;
     $('#expand').hidden = !value;
+    (value ? $('#expand') : panelReturnFocus?.isConnected ? panelReturnFocus : $('#search')).focus({ preventScroll: true });
     saveSettings();
   }
   function matchingTurns() {
     const query = $('#search').value.trim().toLocaleLowerCase();
     return turns.filter(turn => !deleted.has(turn.key) && (!query || `${turn.prompt} ${titles[turn.key] || ''}`.toLocaleLowerCase().includes(query)));
   }
+  function setText(node, text) { if (node.textContent !== text) node.textContent = text; }
   function updateButtons() {
-    $('#selected-count').textContent = `已选 ${selected.size}`;
+    const filtered = matchingTurns();
+    const visibleKeys = new Set(filtered.map(turn => turn.key));
+    const total = turns.length - deletedInInventory();
+    const hiddenSelected = [...selected].filter(key => !visibleKeys.has(key)).length;
+    setText($('#selected-count'), `已选 ${selected.size}`);
+    setText($('#results-count'), $('#search').value.trim() ? `匹配 ${filtered.length} / 共 ${total} 条` : `共 ${total} 条`);
+    $('#selection-hint').hidden = !hiddenSelected;
+    setText($('#selection-hint'), hiddenSelected ? `筛选外还有 ${hiddenSelected} 条已选回复，将一并导出。` : '');
+    $('#clear-search').hidden = !$('#search').value;
     $('#copy').disabled = $('#export').disabled = !selected.size || !loaded;
-    $('#select-all').disabled = $('#select-visible').disabled = !turns.length;
+    $('#select-all').disabled = !total;
+    $('#select-visible').disabled = !filtered.length;
     $('#select-none').disabled = !selected.size;
+    $('#locate-current').disabled = !total;
   }
+  function deletedInInventory() { return turns.reduce((count, turn) => count + Number(deleted.has(turn.key)), 0); }
   async function jump(key, headingKey = null) {
     discovery.cancel();
     // Row listeners keep only the stable key; React may have replaced the original DOM node.
@@ -83,9 +101,20 @@ async function start() {
     const result = await navigation.navigate(() => location.href === route && !deleted.has(key) ? inventory.resolve(key, collect, headingKey) : null);
     if (!result.cancelled && !result.success) notify('该提问尚未完成加载，请稍后再定位。');
   }
-  function updateActive() { shadow.querySelectorAll('.row').forEach(row => { row.classList.toggle('active', row.dataset.key === activeKey); row.querySelector('.jump')?.setAttribute('aria-current', row.dataset.key === activeKey ? 'true' : 'false'); }); }
+  let highlightedRow = null;
+  function updateActive() {
+    const next = rowCache.get(activeKey)?.row;
+    if (highlightedRow !== next) {
+      highlightedRow?.classList.remove('active');
+      highlightedRow?.querySelector('.jump').setAttribute('aria-current', 'false');
+      next?.classList.add('active');
+      next?.querySelector('.jump').setAttribute('aria-current', 'true');
+      highlightedRow = next;
+    }
+  }
   function beginEdit(row, turn) {
-    if (editing) render();
+    if (editing === turn.key) { row.querySelector('textarea')?.focus(); return; }
+    if (editing) rowCache.get(editing)?.row.querySelector('.editor')?.remove();
     editing = turn.key;
     const box = document.createElement('div');
     box.className = 'editor';
@@ -96,60 +125,127 @@ async function start() {
       if (action === 'save') {
         const title = input.value.trim();
         if (!title) { notify('标题不能为空。也可以选择「恢复原提问」。'); input.focus(); return; }
-        titles[turn.key] = title;
-        persist();
+        titles[turn.key] = title; persist();
       } else if (action === 'reset') { delete titles[turn.key]; persist(); }
-      editing = null; render();
+      editing = null; box.remove(); render(); row.querySelector('.edit').focus({ preventScroll: true });
     };
     box.addEventListener('click', event => { const action = event.target.closest('[data-edit]')?.dataset.edit; if (action) finish(action); });
-    input.addEventListener('keydown', event => { if (event.key === 'Escape') finish('cancel'); else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); finish('save'); } });
-    const currentRow = [...shadow.querySelectorAll('.row')].find(item => item.dataset.key === turn.key) || row;
-    currentRow.append(box); input.focus(); input.select();
+    let composing = false;
+    input.addEventListener('compositionstart', () => { composing = true; });
+    input.addEventListener('compositionend', () => { composing = false; });
+    input.addEventListener('keydown', event => {
+      if (composing || event.isComposing || event.keyCode === 229) return;
+      if (event.key === 'Escape') { event.preventDefault(); finish('cancel'); }
+      else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); finish('save'); }
+    });
+    row.append(box); input.focus(); input.select();
+  }
+  // Keep unchanged rows in place: streaming replies must not replace editors or keyboard focus.
+  function reconcile(parent, nodes) {
+    let cursor = parent.firstChild;
+    for (const node of nodes) {
+      if (node === cursor) cursor = cursor.nextSibling;
+      else parent.insertBefore(node, cursor);
+    }
+    while (cursor) { const next = cursor.nextSibling; cursor.remove(); cursor = next; }
+  }
+  function createRow(key) {
+    const row = document.createElement('div');
+    row.className = 'row'; row.setAttribute('role', 'listitem'); row.dataset.key = key;
+    row.innerHTML = '<input type="checkbox"><span class="number"></span><button class="jump" aria-current="false"><span class="title"></span><span class="meta"></span></button><button class="edit" title="自定义标题">✎</button><button class="delete" title="删除导航项">×</button><button class="heading-toggle"></button>';
+    const parts = Object.fromEntries(['number', 'jump', 'title', 'meta', 'edit', 'delete', 'heading-toggle'].map(name => [name, row.querySelector(`.${name}`)]));
+    const checkbox = row.querySelector('input');
+    checkbox.addEventListener('change', () => { checkbox.checked ? selected.add(key) : selected.delete(key); updateButtons(); });
+    parts.jump.addEventListener('click', () => jump(key));
+    parts.edit.addEventListener('click', () => beginEdit(row, turns.find(turn => turn.key === key)));
+    parts.delete.addEventListener('click', () => {
+      const visible = matchingTurns();
+      const index = visible.findIndex(turn => turn.key === key);
+      const nextKey = (visible[index + 1] || visible[index - 1])?.key;
+      deleted.add(key); selected.delete(key); expanded.delete(key);
+      if (editing === key) editing = null;
+      if (activeKey === key) activeKey = nextKey || '';
+      persist(); render(); notify('已删除该导航项。');
+      (rowCache.get(nextKey)?.delete || $('#search')).focus({ preventScroll: true });
+    });
+    parts['heading-toggle'].addEventListener('click', () => { expanded.has(key) ? expanded.delete(key) : expanded.add(key); render(); });
+    const group = document.createElement('div'); group.className = 'heading-list';
+    return { row, checkbox, group, headingButtons: new Map(), ...parts };
+  }
+  function patchRow(parts, turn, index) {
+    const label = titles[turn.key] || turn.prompt;
+    parts.checkbox.checked = selected.has(turn.key);
+    parts.checkbox.setAttribute('aria-label', `选择第 ${index} 条回复`);
+    setText(parts.number, String(index).padStart(2, '0'));
+    parts.jump.title = label; setText(parts.title, label);
+    setText(parts.meta, `${titles[turn.key] ? '已自定义 · ' : ''}${turn.answers.length ? '模型回复' : '等待回复'}`);
+    parts.edit.setAttribute('aria-label', `编辑第 ${index} 条标题`);
+    parts.delete.setAttribute('aria-label', `删除第 ${index} 条导航`);
+    const open = expanded.has(turn.key) && !!turn.headings.length;
+    const toggle = parts['heading-toggle'];
+    toggle.disabled = !turn.headings.length;
+    toggle.title = turn.headings.length ? `${open ? '收起' : '展开'}回复一级标题（${turn.headings.length}）` : '回复暂无一级标题';
+    toggle.setAttribute('aria-label', `${open ? '收起' : '展开'}第 ${index} 条回复一级标题`);
+    toggle.setAttribute('aria-expanded', String(open)); setText(toggle, open ? '▾' : '▸');
+    if (open) {
+      const buttons = turn.headings.map(heading => {
+        let button = parts.headingButtons.get(heading.key);
+        if (!button) {
+          button = document.createElement('button'); button.className = 'heading-jump';
+          button.addEventListener('click', () => jump(turn.key, heading.key));
+          parts.headingButtons.set(heading.key, button);
+        }
+        setText(button, heading.title); button.title = heading.title; return button;
+      });
+      const keys = new Set(turn.headings.map(heading => heading.key));
+      for (const key of parts.headingButtons.keys()) if (!keys.has(key)) parts.headingButtons.delete(key);
+      reconcile(parts.group, buttons);
+      if (parts.group.parentNode !== parts.row) parts.row.insertBefore(parts.group, parts.row.querySelector('.editor'));
+    } else parts.group.remove();
   }
   function render() {
-    editing = null;
     const list = $('.list');
     const previousScroll = list.scrollTop;
-    list.replaceChildren();
     const filtered = matchingTurns();
-    const total = turns.filter(turn => !deleted.has(turn.key)).length;
-    $('.count').textContent = `${total} 条`;
-    $('#expand span').textContent = `${total} 条`;
-    if (!filtered.length) {
+    const indices = new Map(turns.map((turn, index) => [turn.key, index + 1]));
+    for (const key of rowCache.keys()) {
+      if (!indices.has(key) || deleted.has(key)) { rowCache.delete(key); if (editing === key) editing = null; }
+    }
+    const total = turns.length - deletedInInventory();
+    setText($('.count'), `${total} 条`); setText($('#expand span'), `${total} 条`);
+    const nodes = filtered.map(turn => {
+      if (!rowCache.has(turn.key)) rowCache.set(turn.key, createRow(turn.key));
+      const parts = rowCache.get(turn.key); patchRow(parts, turn, indices.get(turn.key)); return parts.row;
+    });
+    if (!nodes.length) {
       const empty = document.createElement('div'); empty.className = 'empty';
-      empty.textContent = turns.length ? '没有匹配的提问。' : settings.mode === 'compatibility'
+      empty.textContent = turns.length ? total ? '没有匹配的提问。清空搜索可查看完整目录。' : '本会话的导航项已全部删除。原始对话仍保留。' : settings.mode === 'compatibility'
         ? `兼容模式尚未识别到提问。请确认对话已加载，且扩展版本为 v${version}。`
         : '等待对话内容…\n开始提问后，这里会显示导航。若已有对话，请在设置中尝试兼容模式。';
-      list.append(empty);
+      nodes.push(empty);
     }
-    for (const turn of filtered) {
-      const index = turns.indexOf(turn) + 1;
-      const row = document.createElement('div'); row.className = 'row'; row.setAttribute('role', 'listitem'); row.dataset.key = turn.key;
-      const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(turn.key); checkbox.setAttribute('aria-label', `选择第 ${index} 条回复`);
-      checkbox.addEventListener('change', () => { checkbox.checked ? selected.add(turn.key) : selected.delete(turn.key); updateButtons(); });
-      const number = document.createElement('span'); number.className = 'number'; number.textContent = String(index).padStart(2, '0');
-      const link = document.createElement('button'); link.className = 'jump'; link.title = turn.prompt;
-      const title = document.createElement('span'); title.className = 'title'; title.textContent = titles[turn.key] || turn.prompt;
-      const meta = document.createElement('span'); meta.className = 'meta'; meta.textContent = `${titles[turn.key] ? '已自定义 · ' : ''}${turn.answers.length ? '模型回复' : '等待回复'}`;
-      link.append(title, meta); link.addEventListener('click', () => jump(turn.key));
-      const edit = document.createElement('button'); edit.className = 'edit'; edit.textContent = '✎'; edit.title = '自定义标题'; edit.setAttribute('aria-label', `编辑第 ${index} 条标题`); edit.addEventListener('click', () => beginEdit(row, turn));
-      const remove = document.createElement('button'); remove.className = 'delete'; remove.textContent = '×'; remove.title = '删除导航项'; remove.setAttribute('aria-label', `删除第 ${index} 条导航`);
-      remove.addEventListener('click', () => { deleted.add(turn.key); selected.delete(turn.key); persist(); render(); notify('已删除该导航项。'); });
-      const toggle = document.createElement('button'); toggle.className = 'heading-toggle'; toggle.textContent = expanded.has(turn.key) ? '▾' : '▸'; toggle.disabled = !turn.headings.length;
-      toggle.title = turn.headings.length ? '展开 / 收起回复一级标题' : '回复暂无一级标题'; toggle.setAttribute('aria-label', `展开第 ${index} 条回复一级标题`); toggle.setAttribute('aria-expanded', String(expanded.has(turn.key)));
-      toggle.addEventListener('click', () => { expanded.has(turn.key) ? expanded.delete(turn.key) : expanded.add(turn.key); render(); });
-      row.append(checkbox, number, link, edit, remove, toggle);
-      if (expanded.has(turn.key)) {
-        const group = document.createElement('div'); group.className = 'heading-list';
-        for (const heading of turn.headings) {
-          const button = document.createElement('button'); button.className = 'heading-jump'; button.textContent = heading.title; button.title = heading.title;
-          button.addEventListener('click', () => jump(turn.key, heading.key)); group.append(button);
-        }
-        row.append(group);
-      }
-      list.append(row);
-    }
+    reconcile(list, nodes);
     list.scrollTop = previousScroll; updateButtons(); updateActive();
+  }
+  function closestTurn() {
+    const boundary = innerHeight / 3;
+    let current = null, closest = Infinity;
+    for (const turn of turns) {
+      if (!turn.anchor.isConnected || deleted.has(turn.key)) continue;
+      const distance = Math.abs(turn.anchor.getBoundingClientRect().top - boundary);
+      if (distance < closest) { closest = distance; current = turn; }
+    }
+    return current;
+  }
+  function locateCurrent() {
+    const current = turns.find(turn => turn.key === activeKey && !deleted.has(turn.key)) || closestTurn() || matchingTurns()[0];
+    if (!current) return;
+    activeKey = current.key; $('#search').value = ''; render();
+    const row = rowCache.get(current.key)?.row;
+    if (!row) return;
+    const list = $('.list'), area = list.getBoundingClientRect(), rect = row.getBoundingClientRect();
+    if (rect.top < area.top || rect.bottom > area.bottom) list.scrollTop += rect.top - area.top - Math.max(0, (list.clientHeight - rect.height) / 2);
+    row.querySelector('.jump').focus({ preventScroll: true });
   }
   async function refresh() {
     clearTimeout(timer); timer = null;
@@ -209,6 +305,8 @@ async function start() {
   $('#collapse').addEventListener('click', () => collapsed(true)); $('#expand').addEventListener('click', () => collapsed(false));
   $('#settings-toggle').addEventListener('click', () => { const value = !$('.settings').hidden; $('.settings').hidden = value; $('#settings-toggle').setAttribute('aria-expanded', String(!value)); });
   $('#search').addEventListener('input', render);
+  $('#clear-search').addEventListener('click', () => { $('#search').value = ''; render(); $('#search').focus({ preventScroll: true }); });
+  $('#locate-current').addEventListener('click', locateCurrent);
   $('#select-all').addEventListener('click', () => { selected = new Set(turns.filter(turn => !deleted.has(turn.key)).map(turn => turn.key)); render(); });
   $('#select-visible').addEventListener('click', () => { matchingTurns().forEach(turn => selected.add(turn.key)); render(); });
   $('#select-none').addEventListener('click', () => { selected.clear(); render(); });
@@ -233,14 +331,8 @@ async function start() {
     scrollFrame = requestAnimationFrame(() => {
       scrollFrame = null;
       if (!turns.length || navigation.active || discovery.active) return;
-      const boundary = innerHeight / 3;
-      let current = turns[0];
-      let closest = Infinity;
-      for (const turn of turns.filter(turn => turn.anchor.isConnected && !deleted.has(turn.key))) {
-        const distance = Math.abs(turn.anchor.getBoundingClientRect().top - boundary);
-        if (distance < closest) { closest = distance; current = turn; }
-      }
-      if (activeKey !== current.key) { activeKey = current.key; updateActive(); }
+      const current = closestTurn();
+      if (current && activeKey !== current.key) { activeKey = current.key; updateActive(); }
     });
   }, { passive: true, capture: true });
   new MutationObserver(records => { if (records.some(record => record.target !== host && !host.contains(record.target))) schedule(); })

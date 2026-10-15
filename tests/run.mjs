@@ -9,6 +9,7 @@ import { createServer } from 'node:http';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
+import { experienceTests } from './experience.mjs';
 import { modernConversation } from './modern-fixture.mjs';
 import { scrollConversation, virtualConversation } from './scroll-fixture.mjs';
 import { installChromeScript, installFirefoxScript, firefoxTestScript, chromeManagerId, firefoxManagerUUID } from './tampermonkey.mjs';
@@ -44,6 +45,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
+  if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
   await ui.goto('/c/fixture-primary');
   await check('真实扩展注入、导航提问与隐藏分支过滤', async () => {
@@ -339,10 +341,13 @@ async function sharedTests(ui, entry) {
     await pause(700);
     assert.ok(Math.abs(await ui.eval(() => document.querySelector('.thread-scroll-container').scrollTop) - manual) < 2, 'navigator does not pull the user back');
   });
+  }
+  if (!process.env.TEST_ONLY_NAVIGATION) await experienceTests(ui, { check, shadow, wait, pause, artifactDir, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))
+const htmlFor = url => url.includes('fixture-experience-100') ? scrollConversation(false, 100)
+  : url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))
   : url.includes('fixture-virtual') ? virtualConversation()
   : url.includes('fixture-modern') ? modernConversation
   : url.includes('fixture-contents') ? fallbackConversation.replaceAll('<article ', '<article style="display:contents" ')
@@ -371,6 +376,7 @@ if (browserList.includes('chromium')) {
       errors, eval: (fn, arg) => page.evaluate(fn, arg),
       goto: route => page.goto(`https://chatgpt.com${route}`), reload: () => page.reload(),
       click: selector => page.locator(`#conversation-navigator-root ${selector}`).click(),
+      press: (selector, key) => page.locator(`#conversation-navigator-root ${selector}`).press(key),
       fill: (selector, value) => page.locator(`#conversation-navigator-root ${selector}`).fill(value),
       select: (selector, value) => page.locator(`#conversation-navigator-root ${selector}`).selectOption(value),
       resize: (width, height) => page.setViewportSize({ width, height }),
@@ -461,6 +467,7 @@ if (browserList.includes('firefox')) {
       errors: [], eval: (fn, arg) => driver.executeScript(`return (${fn.toString()})(arguments[0])`, arg ?? null),
       goto: route => driver.get(`${origin}${route}`), reload: () => driver.navigate().refresh(),
       click: async selector => (await element(selector)).click(),
+      press: async (selector, key) => (await element(selector)).sendKeys(({Enter: Key.ENTER, Escape: Key.ESCAPE, Space: Key.SPACE, Tab: Key.TAB})[key] || key),
       fill: async (selector, value) => { const el = await element(selector); await el.clear(); if (value) await el.sendKeys(value); else await driver.executeScript('arguments[0].dispatchEvent(new Event("input", {bubbles:true}))', el); },
       select: async (selector, value) => driver.executeScript('const el=document.querySelector("#conversation-navigator-root").shadowRoot.querySelector(arguments[0]);el.value=arguments[1];el.dispatchEvent(new Event("change",{bubbles:true}))', selector, value),
       resize: (width, height) => driver.manage().window().setRect({ width, height }),
