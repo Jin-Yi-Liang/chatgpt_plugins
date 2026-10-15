@@ -2,12 +2,18 @@
 
 在 ChatGPT 网页右侧添加按用户提问组织的目录，方便浏览长会话，并把选中的模型回复连续复制或导出为 Markdown。
 
-当前版本 **0.3.1**，支持桌面 Chrome / Firefox 的 Tampermonkey。运行网站：`https://chatgpt.com/`、旧域名 `https://chat.openai.com/`。DeepSeek 与 Claude 仅预留代码接口，当前未启用。
+当前版本 **0.3.2**，支持桌面 Chrome / Firefox 的 Tampermonkey。运行网站：`https://chatgpt.com/`、旧域名 `https://chat.openai.com/`。DeepSeek 与 Claude 仅预留代码接口，当前未启用。
+
+## v0.3.2 更新
+
+- 修复窗口化长会话重排后，Firefox 提问和回复 H1 导航可能无法跳转的问题。
+- 修复 Chrome 首次打开完整长会话时误触发整页扫描导致的卡顿。
+- 定位已卸载消息时使用当前占位节点位置，减少点击时重复收集和布局计算。
 
 ## 安装
 
 1. 从 [Tampermonkey 官网](https://www.tampermonkey.net/) 安装对应浏览器的官方脚本管理器。
-2. Chrome 如提示用户脚本未获许可，在 Tampermonkey 扩展详情启用“允许用户脚本 / Allow User Scripts”；见 [官方说明](https://www.tampermonkey.net/faq.php?q=Q209)。
+2. Chrome 安装后请确认 Tampermonkey 扩展详情中的“允许用户脚本 / Allow User Scripts”已开启；脚本列表中的“启用”与浏览器执行许可是两项设置。见 [官方说明](https://www.tampermonkey.net/faq.php?q=Q209)。
 3. 点击本页“安装此脚本”，在 Tampermonkey 确认页核对名称及站点并安装。
 4. 如已安装同项目的原生浏览器扩展，请先停用，避免重复注入。
 5. 刷新 ChatGPT，进入已有会话，右侧即显示导航面板。
@@ -44,13 +50,13 @@
 
 ## 行为与限制
 
-- 长会话会整理已加载的消息窗口，保留暂时离开 DOM 的目录和已读取回复。首次整理可能短暂隐藏快速跳动的正文；最多运行 25 秒，手动操作可接管。随后正常滚动继续补充已发现条目。
+- 长会话会整理已加载的消息窗口，保留暂时离开 DOM 的目录和已读取回复。只探测缺失消息的占位节点，正文完整时不扫描长回复；最多运行 25 秒，手动操作会立即接管并恢复正文显示。随后正常滚动继续补充已发现条目。
 - 回复仍在生成或尚无内容时，会提示等待，避免导出不完整内容。
 - Markdown 支持代码、表格、链接、图片 URL 和 LaTeX 公式。图片仅保留 URL，临时链接可能过期。
 - 服务端未加载的历史、隐藏分支、复杂图表 / Canvas 内容无法保证完整读取。ChatGPT 页面结构变化可能需要更新。
 - H1 只读取回复的一级标题，H2 / H3 不在子导航中显示。选区与展开状态刷新后重置，标题、删除状态和偏好保留。
 
-本版在真实 Chrome for Testing 156 / Firefox 157 中安装官方 Tampermonkey 5.5.1 / 5.5.0，分别通过 31 组集成测试；原生扩展另有 62 组回归。会话采用模拟数据及脱敏 DOM，并非作者登录 ChatGPT 会话的现场验收。
+本版在真实 Chrome for Testing 156 / Firefox 157 中安装官方 Tampermonkey 5.5.1 / 5.5.0，分别通过 33 组集成测试；原生扩展另有 66 组回归。会话采用模拟数据及脱敏 DOM，并非作者登录 ChatGPT 会话的现场验收。
 
 ## 源码与反馈
 

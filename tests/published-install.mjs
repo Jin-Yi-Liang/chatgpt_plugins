@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { chromeManagerId, firefoxManagerUUID } from './tampermonkey.mjs';
+import { chromeManagerId, firefoxManagerUUID, installChromeScript } from './tampermonkey.mjs';
 import { conversation } from './fixture.mjs';
 
 // Tests the public distribution path in fresh profiles, without the author's login.
@@ -37,30 +37,49 @@ try {
   if (await permission.getAttribute('aria-checked') !== 'true') await permission.click();
   await page.goto(`chrome-extension://${chromeManagerId}/options.html`);
   await page.getByText('Utilities', { exact: true }).waitFor();
+  let upgradedContent = null;
+  if (process.env.PUBLICATION_UPGRADE_FROM) {
+    await installChromeScript(context, page, path.resolve(process.env.PUBLICATION_UPGRADE_FROM));
+    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: conversation }));
+    upgradedContent = await context.newPage();
+    await upgradedContent.goto('https://chatgpt.com/c/public-install-smoke');
+    await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'old release runs before upgrade');
+    assert.equal(await upgradedContent.locator('#conversation-navigator-root').getAttribute('data-version'), '0.3.1');
+    await upgradedContent.locator('#conversation-navigator-root .row[data-key="id:user-1"] .edit').click();
+    await upgradedContent.locator('#conversation-navigator-root .editor textarea').fill('升级后应保留的标题');
+    await upgradedContent.locator('#conversation-navigator-root [data-edit="save"]').click();
+    await upgradedContent.locator('#conversation-navigator-root .row[data-key="id:user-2"] .delete').click();
+    await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 2), 'old release deletion saved');
+    await delay(300);
+  }
   await page.goto(links.page);
-  const install = page.getByRole('link', { name: '安装此脚本', exact: true });
+  const install = page.getByRole('link', { name: /^(安装此脚本|更新到 .+ 版本)$/ });
   assert.equal(await install.getAttribute('href'), links.install);
+  const previousInstallers = new Set(context.pages().filter(tab => tab.url().includes('/ask.html')));
   // Tampermonkey may interrupt the ordinary navigation as it opens its installer.
   await install.click().catch(error => { if (!/interrupted|ERR_BLOCKED_BY_CLIENT|Download is starting/.test(error.message)) throw error; });
   console.log(JSON.stringify({ phase: 'Chrome public link clicked', pages: context.pages().map(tab => tab.url()) }));
-  const installer = await until(async () => context.pages().find(tab => tab.url().includes(`chrome-extension://${chromeManagerId}/ask.html`)), 'public Chrome install confirmation');
-  await installer.getByRole('button', { name: 'Install', exact: true }).click();
+  const installer = await until(async () => context.pages().find(tab => !previousInstallers.has(tab) && tab.url().includes(`chrome-extension://${chromeManagerId}/ask.html`)), 'public Chrome install confirmation');
+  await installer.getByRole('button', { name: /^(Install|Update|Reinstall)$/ }).click();
   await page.goto(`chrome-extension://${chromeManagerId}/options.html`);
   await page.getByText('Installed Userscripts', { exact: true }).click();
   await page.getByText('Conversation Navigator for ChatGPT', { exact: true }).first().waitFor();
-  assert.ok((await page.locator('body').innerText()).includes(links.version));
+  await until(async () => (await page.locator('body').innerText()).includes(links.version), 'updated dashboard version');
   await page.screenshot({ path: path.join(artifacts, 'chrome-public-installed.png') });
   // Exercise the publicly installed production script with controlled HTTPS data.
   // Use a fresh content tab: the installer's final dashboard redirect can be delayed.
   await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: conversation }));
-  const content = await context.newPage();
-  await content.goto('https://chatgpt.com/c/public-install-smoke');
-  await until(() => content.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'public Chrome script runs');
+  const content = upgradedContent || await context.newPage();
+  if (upgradedContent) await content.reload();
+  else await content.goto('https://chatgpt.com/c/public-install-smoke');
+  await until(() => content.locator('#conversation-navigator-root .row').count().then(count => count === (upgradedContent ? 2 : 3)), 'public Chrome script runs');
   assert.equal(await content.locator('#conversation-navigator-root').getAttribute('data-version'), links.version);
-  await content.locator('#conversation-navigator-root .row:nth-child(3) .jump').click();
+  if (upgradedContent) assert.equal(await content.locator('#conversation-navigator-root .row[data-key="id:user-1"] .title').textContent(), '升级后应保留的标题');
+  await content.locator('#conversation-navigator-root .row[data-key="id:user-3"] .jump').click();
   await until(() => content.evaluate(() => document.querySelector('[data-message-id="user-3"]').getBoundingClientRect().top < innerHeight), 'public Chrome navigation');
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
-    productionHTTPSFixture: '3 questions injected; actual navigation click passed' });
+    productionHTTPSFixture: 'Actual navigation click passed',
+    upgrade: upgradedContent ? { from: '0.3.1', to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];
   for (const [index, tab] of (context?.pages() || []).entries()) {
