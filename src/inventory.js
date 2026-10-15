@@ -1,4 +1,4 @@
-import { positionHint } from './navigation.js';
+import { positionHint, hasLayout } from './navigation.js';
 import { hash } from './platforms.js';
 
 function headings(answers, old = []) {
@@ -101,7 +101,10 @@ export function createInventory() {
     for (let i = 0; i < turns.length; i++) {
       const turn = turns[i];
       const old = entries.get(turn.key);
-      entries.set(turn.key, { ...turn, answers: turn.answers.length ? turn.answers : old?.answers || [], hint: positionHint(turn.anchor) || old?.hint });
+      const shell = turn.anchor.closest('[data-turn-key], article, [data-testid^="conversation-turn"]');
+      const identity = shell && ['data-turn-key', 'data-turn-id', 'data-testid'].map(attribute => ({ attribute, value: shell.getAttribute(attribute) })).find(item => item.value);
+      entries.set(turn.key, { ...turn, shell: shell || old?.shell, shellIdentity: identity || old?.shellIdentity,
+        answers: turn.answers.length ? turn.answers : old?.answers || [], hint: positionHint(turn.anchor) || old?.hint });
       const entry = entries.get(turn.key);
       entry.headings = headings(entry.answers, old?.headings);
     }
@@ -131,14 +134,26 @@ export function createInventory() {
     let entry = entries.get(key);
     if (!entry) return null;
     let target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
-    if (!target?.anchor?.isConnected || !target.anchor.getClientRects().length) {
+    if (!hasLayout(target?.anchor)) {
       merge(collect()); entry = entries.get(key);
       target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
     }
     if (!target) return null;
     const index = indices.get(key);
     const direction = mountedStart === Infinity ? 0 : index < mountedStart ? -1 : index > mountedEnd ? 1 : 0;
-    return { anchor: target.anchor?.isConnected && target.anchor.getClientRects().length ? target.anchor : null, hint: target.hint ? { ...target.hint, direction } : entry.hint ? { ...entry.hint, direction } : null };
+    const anchor = hasLayout(target.anchor) ? target.anchor : null;
+    let hint = target.hint || entry.hint;
+    if (!anchor) {
+      // The body may be unmounted while its current placeholder still exists.
+      // Cached offsets can be hundreds of thousands of pixels stale after reflow.
+      let shell = entry.shell;
+      if (!hasLayout(shell) && entry.shellIdentity) {
+        const { attribute, value } = entry.shellIdentity;
+        shell = [...document.querySelectorAll(`[${attribute}="${CSS.escape(value)}"]`)].find(hasLayout);
+      }
+      hint = positionHint(shell) || hint;
+    }
+    return { anchor, hint: hint ? { ...hint, direction } : null };
   }
   return { merge, all, resolve };
 }

@@ -10,8 +10,9 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { experienceTests } from './experience.mjs';
+import { navigationRegressions } from './navigation-regressions.mjs';
 import { modernConversation } from './modern-fixture.mjs';
-import { scrollConversation, virtualConversation } from './scroll-fixture.mjs';
+import { scrollConversation, virtualConversation, preloadedTallConversation } from './scroll-fixture.mjs';
 import { installChromeScript, installFirefoxScript, firefoxTestScript, chromeManagerId, firefoxManagerUUID } from './tampermonkey.mjs';
 
 const root = process.cwd();
@@ -45,6 +46,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
+  if (!process.env.TEST_ONLY_STARTUP) {
   if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
   await ui.goto('/c/fixture-primary');
@@ -343,10 +345,13 @@ async function sharedTests(ui, entry) {
   });
   }
   if (!process.env.TEST_ONLY_NAVIGATION) await experienceTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  }
+  if (!process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION) await navigationRegressions(ui, { check, shadow, wait, pause, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-experience-100') ? scrollConversation(false, 100)
+const htmlFor = url => url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
+  : url.includes('fixture-experience-100') ? scrollConversation(false, 100)
   : url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))
   : url.includes('fixture-virtual') ? virtualConversation()
   : url.includes('fixture-modern') ? modernConversation

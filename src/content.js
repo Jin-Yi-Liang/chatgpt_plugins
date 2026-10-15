@@ -94,7 +94,7 @@ async function start() {
   async function jump(key, headingKey = null) {
     discovery.cancel();
     // Row listeners keep only the stable key; React may have replaced the original DOM node.
-    accept(collect());
+    // Resolve refreshes missing targets on demand; a live target needs no full transcript scan.
     const route = location.href;
     activeKey = key;
     updateActive();
@@ -249,9 +249,10 @@ async function start() {
   }
   async function refresh() {
     clearTimeout(timer); timer = null;
+    host.toggleAttribute('data-dark', document.documentElement.classList.contains('dark') || document.documentElement.dataset.theme === 'dark');
+    if (discovery.active && adapter.conversationKey(location, turns) === conversation) return;
     let next = adapter.collect(document, settings.mode);
     const nextConversation = adapter.conversationKey(location, next);
-    host.toggleAttribute('data-dark', document.documentElement.classList.contains('dark') || document.documentElement.dataset.theme === 'dark');
     if (nextConversation !== conversation) {
       navigation.cancel(); discovery.cancel(); inventory = createInventory(); scanned = false;
       const previous = conversation, previousTitles = { ...titles }, previousDeleted = new Set(deleted), previousFirst = lastFirstKey;

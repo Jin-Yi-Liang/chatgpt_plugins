@@ -45,3 +45,9 @@ export function virtualConversation(count = 16) {
   document.addEventListener('click', event => { if(event.composedPath().some(node=>node.classList?.contains('jump'))) window.navigationClicks++; }, true);
   </script>`;
 }
+
+export function preloadedTallConversation() {
+  const turns = Array.from({ length: 10 }, (_, i) => `<div data-turn-key="loaded-${i+1}" class="[&_[data-virtualized-turn-content]]:[content-visibility:visible]"><div style="display:contents"><div data-user-message-bubble>已加载提问 ${i+1}</div></div><div data-chatgpt-selection-message-id="loaded-answer-${i+1}"><div data-markdown-text-style><h1>已加载标题 ${i+1}</h1><p>完整回复</p><div style="height:26000px"></div></div></div></div>`).join('');
+  return `<!doctype html><meta charset="utf-8"><title>已加载长会话</title><style>body{margin:0}header{height:70px}.thread-scroll-container{height:760px;overflow:auto;scroll-padding-top:24px;overflow-anchor:none;scroll-behavior:smooth}[data-user-message-bubble]{padding:16px}[data-markdown-text-style]{padding:16px}</style><header>完整消息，样式类名不代表消息尚未加载</header><main><div class="thread-scroll-container"><div data-chatgpt-conversation-selection-target>${turns}</div></div></main><textarea id="paste-target"></textarea><script>const s=document.querySelector('.thread-scroll-container');s.style.scrollBehavior='auto';s.scrollTop=s.scrollHeight-s.clientHeight;
+  document.addEventListener('click',e=>{if(window.navigationTiming||!e.composedPath().some(n=>n.classList?.contains('jump')))return;const start=performance.now();window.navigationTiming={};requestAnimationFrame(()=>{window.navigationTiming.duration=performance.now()-start;window.navigationTiming.offset=document.querySelector('[data-turn-key="loaded-2"] [data-user-message-bubble]').getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop;});},true);</script>`;
+}

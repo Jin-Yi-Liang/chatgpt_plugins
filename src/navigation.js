@@ -11,10 +11,15 @@ export function viewport(container) {
 }
 
 export function positionHint(anchor) {
-  if (!anchor?.isConnected || !anchor.getClientRects().length) return null;
+  if (!hasLayout(anchor)) return null;
   const container = scrollContainer(anchor);
   const area = viewport(container);
   return { container, top: container.scrollTop + anchor.getBoundingClientRect().top - area.top };
+}
+
+export function hasLayout(anchor) {
+  if (!anchor?.isConnected) return false;
+  return [...anchor.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
 }
 
 export function createNavigation() {
@@ -28,19 +33,23 @@ export function createNavigation() {
   function navigate(resolve, offset = null) {
     cancel();
     return new Promise(finish => {
-      const run = { finish, frame: 0, started: performance.now(), lastSeek: -Infinity, stableSince: null };
+      const run = { finish, frame: 0, started: performance.now(), lastSeek: -Infinity, stableSince: null, checked: -Infinity, anchor: null, container: null, padding: 16 };
       current = run;
-      let initial = true;
       function step() {
         if (current !== run) return;
         const now = performance.now();
+        if (now - run.checked < 50) { run.frame = requestAnimationFrame(step); return; }
+        run.checked = now;
         const target = resolve();
-        if (target?.anchor?.isConnected && target.anchor.getClientRects().length) {
+        if (hasLayout(target?.anchor)) {
           const anchor = target.anchor;
-          if (initial) { anchor.scrollIntoView({ behavior: 'instant', block: 'start', inline: 'nearest' }); initial = false; }
-          const container = scrollContainer(anchor);
+          if (run.anchor !== anchor || !run.container?.isConnected || !run.container.contains(anchor)) {
+            run.anchor = anchor; run.container = scrollContainer(anchor);
+            run.padding = offset ?? Math.max(16, parseFloat(getComputedStyle(run.container).scrollPaddingTop) || 0, parseFloat(getComputedStyle(anchor).scrollMarginTop) || 0);
+          }
+          const container = run.container;
           const area = viewport(container);
-          const padding = offset ?? Math.max(16, parseFloat(getComputedStyle(container).scrollPaddingTop) || 0, parseFloat(getComputedStyle(anchor).scrollMarginTop) || 0);
+          const padding = run.padding;
           const rect = anchor.getBoundingClientRect();
           const delta = rect.top - area.top - padding;
           const before = container.scrollTop;

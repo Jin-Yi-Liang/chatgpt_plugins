@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-conversation-navigator",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "description": "ChatGPT question navigation and selected answer Markdown export for Chrome and Firefox",
