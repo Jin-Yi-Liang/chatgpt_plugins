@@ -14,7 +14,8 @@
     "test:userscript": "npm run build && npm run prepare:tampermonkey && TEST_RUNTIME=tampermonkey node tests/run.mjs",
     "prepare:tampermonkey": "node scripts/prepare-tampermonkey.mjs",
     "check:userscript": "node scripts/check-userscript.mjs",
-    "test:performance": "node tests/inventory-benchmark.mjs"
+    "test:performance": "node tests/inventory-benchmark.mjs",
+    "test:published": "npm run prepare:tampermonkey && node tests/published-install.mjs"
   },
   "dependencies": {
     "turndown": "^7.2.2",
