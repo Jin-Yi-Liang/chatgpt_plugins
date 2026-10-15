@@ -96,6 +96,7 @@ export function createInventory() {
   const indices = new Map();
   let mountedStart = Infinity;
   let mountedEnd = -Infinity;
+  let lastResolveKey = '', lastResolveRefresh = -Infinity;
   function merge(turns) {
     let structureChanged = insertNewKeys(order, entries, turns);
     for (let i = 0; i < turns.length; i++) {
@@ -134,15 +135,16 @@ export function createInventory() {
     let entry = entries.get(key);
     if (!entry) return null;
     let target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
-    if (!hasLayout(target?.anchor)) {
+    if (!hasLayout(target?.anchor) && (lastResolveKey !== key || performance.now() - lastResolveRefresh >= 150)) {
+      lastResolveKey = key; lastResolveRefresh = performance.now();
       merge(collect()); entry = entries.get(key);
       target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
     }
-    if (!target) return null;
     const index = indices.get(key);
     const direction = mountedStart === Infinity ? 0 : index < mountedStart ? -1 : index > mountedEnd ? 1 : 0;
-    const anchor = hasLayout(target.anchor) ? target.anchor : null;
-    let hint = target.hint || entry.hint;
+    const anchor = hasLayout(target?.anchor) ? target.anchor : null;
+    let hint = target?.hint || entry.hint;
+    let source = 'history';
     if (!anchor) {
       // The body may be unmounted while its current placeholder still exists.
       // Cached offsets can be hundreds of thousands of pixels stale after reflow.
@@ -151,9 +153,12 @@ export function createInventory() {
         const { attribute, value } = entry.shellIdentity;
         shell = [...document.querySelectorAll(`[${attribute}="${CSS.escape(value)}"]`)].find(hasLayout);
       }
-      hint = positionHint(shell) || hint;
+      const currentHint = positionHint(shell);
+      if (currentHint) { hint = currentHint; source = 'shell'; }
     }
-    return { anchor, hint: hint ? { ...hint, direction } : null };
+    // A reply can mount before its headings. Keep the requested key pending while
+    // the page finishes rendering instead of silently cancelling the navigation.
+    return { anchor, hint: hint ? { ...hint, direction, source } : null };
   }
   return { merge, all, resolve };
 }

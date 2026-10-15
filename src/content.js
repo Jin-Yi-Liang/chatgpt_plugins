@@ -91,15 +91,22 @@ async function start() {
     $('#locate-current').disabled = !total;
   }
   function deletedInInventory() { return turns.reduce((count, turn) => count + Number(deleted.has(turn.key)), 0); }
+  let jumpGeneration = 0;
   async function jump(key, headingKey = null) {
     discovery.cancel();
     // Row listeners keep only the stable key; React may have replaced the original DOM node.
     // Resolve refreshes missing targets on demand; a live target needs no full transcript scan.
     const route = location.href;
+    const scope = conversation, attempt = ++jumpGeneration;
     activeKey = key;
     updateActive();
-    const result = await navigation.navigate(() => location.href === route && !deleted.has(key) ? inventory.resolve(key, collect, headingKey) : null);
-    if (!result.cancelled && !result.success) notify('该提问尚未完成加载，请稍后再定位。');
+    notify('正在定位…等待目标内容加载。');
+    const result = await navigation.navigate(() => location.href === route && conversation === scope && !deleted.has(key)
+      ? inventory.resolve(key, collect, headingKey) : { cancelled: true });
+    if (attempt !== jumpGeneration || conversation !== scope || location.href !== route) return;
+    if (result.cancelled) notify('定位已停止。');
+    else if (result.success) notify(headingKey ? '已定位到回复一级标题。' : '已定位到提问。');
+    else notify(result.reason === 'timeout' ? '定位未完成：目标仍未加载或页面持续重排，请稍后重试。' : '该目标暂时不可用，请等待页面加载后重试。');
   }
   let highlightedRow = null;
   function updateActive() {

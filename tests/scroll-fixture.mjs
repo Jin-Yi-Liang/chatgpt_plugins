@@ -6,6 +6,13 @@ export function scrollConversation(reverse = true, count = 12) {
   <script>
   window.navigationClicks = 0;
   document.addEventListener('click', event => { if (event.composedPath().some(node => node.classList?.contains('jump'))) window.navigationClicks++; }, true);
+  window.armScrollRestoration = function(index, duration) {
+    const s=document.querySelector('.thread-scroll-container'),target=document.querySelector('[data-turn-key="scroll-'+index+'"] [data-user-message-bubble]');
+    s.style.scrollBehavior='auto';s.scrollTop+=target.getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop-250;
+    const held=s.scrollTop,until=performance.now()+duration;
+    window.restorationCount=0;
+    s.addEventListener('scroll',()=>{if(performance.now()<until&&Math.abs(s.scrollTop-held)>1){window.restorationCount++;s.scrollTop=held;}});
+  };
   window.armLayoutChange = function(index) {
     const scroller = document.querySelector('.thread-scroll-container');
     scroller.addEventListener('scroll', function onScroll() {
@@ -26,22 +33,39 @@ export function virtualConversation(count = 16) {
   </style><header>窗口化会话：DOM 只保留附近消息，导航应列出全部提问</header><main><div class="thread-scroll-container" tabindex="0"><div class="transcript" data-chatgpt-conversation-selection-target>${shells}</div></div></main><textarea id="paste-target"></textarea><script>
   const scroller = document.querySelector('.thread-scroll-container');
   let mounted = '';
+  let delayed = null;
+  window.armNavigationDelay = (index, duration, kind) => { delayed = { index: index-1, duration, kind, started: false, ready: false }; };
   function updateVirtualWindow() {
     const nodes = [...document.querySelectorAll('.virtual-turn')];
     const rect = scroller.getBoundingClientRect();
     let nearest = 0, distance = Infinity;
     nodes.forEach((node,index) => { const delta = Math.abs(node.getBoundingClientRect().top - rect.top); if (delta < distance) { distance = delta; nearest = index; } });
     const start = Math.max(0, Math.min(${count} - 4, nearest - 1));
+    if (delayed && !delayed.started && delayed.index >= start && delayed.index <= start+3) {
+      delayed.started = true;
+      delayed.startedAt = performance.now();
+      setTimeout(() => { delayed.ready = true; delayed.readyAt = performance.now(); mounted=''; updateVirtualWindow(); }, delayed.duration);
+      if (delayed.kind === 'moving') setTimeout(() => {
+        nodes[delayed.index+1].style.height = '40720px';
+        nodes[delayed.index+2].style.height = '40720px';
+        mounted=''; updateVirtualWindow();
+      }, 180);
+    }
     if (String(start) === mounted) return;
     mounted = String(start);
     nodes.forEach((node,index) => {
       if (index < start || index > start + 3) node.replaceChildren();
-      else if (!node.children.length) node.innerHTML = '<div data-virtualized-turn-content><div data-user-message-bubble><div class="whitespace-pre-wrap">第 ' + (index+1) + ' 个窗口化提问：项目应保留并能选择删除</div></div><div data-chatgpt-selection-message-id="virtual-answer-' + (index+1) + '"><div data-markdown-text-style><h1>窗口化一级标题 ' + (index+1) + '</h1><p>窗口化回复 ' + (index+1) + '</p><h2>二级标题不进入子导航</h2><h1>窗口化第二个一级标题 ' + (index+1) + '</h1></div></div></div>';
+      else if (delayed?.index === index && delayed.started && !delayed.ready && delayed.kind !== 'heading') node.replaceChildren();
+      else if (!node.children.length || (delayed?.index === index && delayed.ready && !node.querySelector('h1'))) {
+        node.innerHTML = '<div data-virtualized-turn-content><div data-user-message-bubble><div class="whitespace-pre-wrap">第 ' + (index+1) + ' 个窗口化提问：项目应保留并能选择删除</div></div><div data-chatgpt-selection-message-id="virtual-answer-' + (index+1) + '"><div data-markdown-text-style><h1>窗口化一级标题 ' + (index+1) + '</h1><p>窗口化回复 ' + (index+1) + '</p><h2>二级标题不进入子导航</h2><h1>窗口化第二个一级标题 ' + (index+1) + '</h1></div></div></div>';
+        if (delayed?.index === index && !delayed.ready && delayed.kind === 'heading') node.querySelectorAll('h1').forEach(h=>h.remove());
+      }
     });
   }
   scroller.addEventListener('scroll', updateVirtualWindow);
   updateVirtualWindow();
   window.navigationClicks = 0;
+  window.delayedNavigationState = () => delayed && { kind: delayed.kind, ready: delayed.ready, elapsed: delayed.readyAt - delayed.startedAt };
   document.addEventListener('click', event => { if(event.composedPath().some(node=>node.classList?.contains('jump'))) window.navigationClicks++; }, true);
   </script>`;
 }
