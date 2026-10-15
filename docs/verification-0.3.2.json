@@ -1,0 +1,1365 @@
+{
+  "version": "0.3.2",
+  "date": "2026-10-15",
+  "branch": "fix/userscript-navigation",
+  "base": "808f503",
+  "implementationCommit": "94dbee2",
+  "observedPageStructure": {
+    "chromeScrollHeight": 267724,
+    "firefoxScrollHeight": 263077,
+    "firefoxReportedVersion": "0.3.1",
+    "firefoxReportedRuntime": "tampermonkey",
+    "firefoxReportedDiscovery": "complete",
+    "containsPrivateChatText": false
+  },
+  "before": {
+    "chrome": {
+      "started": "2026-10-15T08:57:57.644Z",
+      "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+      "browsers": [
+        {
+          "browser": "chromium",
+          "engine": "156.0.8078.4",
+          "extension": "dist/chrome manifest unchanged, --load-extension",
+          "tests": [
+            {
+              "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+              "passed": false,
+              "error": "AssertionError [ERR_ASSERTION]: CSS class names alone do not require a discovery sweep\n\n'running' !== 'idle'\n\n    at file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:13:12\n    at async check (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:38:11)\n    at async navigationRegressions (file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:10:3)\n    at async sharedTests (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:349:79)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:428:5"
+            }
+          ],
+          "startupNavigation": [],
+          "error": "AssertionError [ERR_ASSERTION]: CSS class names alone do not require a discovery sweep\n\n'running' !== 'idle'\n\n    at file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:13:12\n    at async check (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:38:11)\n    at async navigationRegressions (file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:10:3)\n    at async sharedTests (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:349:79)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:428:5"
+        }
+      ],
+      "runtime": "WebExtension",
+      "finished": "2026-10-15T08:57:58.196Z",
+      "passed": false,
+      "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+      "bundleSHA256": {
+        "dist/chrome/content.js": "554243f3f7421783c07daf12b25f8fd6003ffa00223d955f3bd0e69c005180f4",
+        "dist/chrome/manifest.json": "a12e80e9bd4ae2d23f1ecc6a83370c3c4e708ad7cc1842b4de654c8b23f1c2c3",
+        "dist/firefox/content.js": "554243f3f7421783c07daf12b25f8fd6003ffa00223d955f3bd0e69c005180f4",
+        "dist/firefox/manifest.json": "b20b5ab7daa174e3878cb813d4ad302f7deba2e15bb161faa5eb0247a0a3c0e0"
+      }
+    },
+    "firefox": {
+      "started": "2026-10-15T08:58:21.628Z",
+      "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+      "browsers": [
+        {
+          "browser": "firefox",
+          "engine": "157.0",
+          "extension": "Official signed Tampermonkey XPI; own WebExtension NOT installed; UI-imported userscript with test-only HTTP ChatGPT match",
+          "tests": [
+            {
+              "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+              "passed": false,
+              "error": "Error: Timeout: reflowed unmounted question aligns in one click\n    at wait (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:33:9)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:37:5\n    at async check (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:38:11)\n    at async navigationRegressions (file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:26:3)\n    at async sharedTests (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:349:79)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:524:5"
+            }
+          ],
+          "manager": {
+            "url": "https://addons.mozilla.org/firefox/downloads/file/4797143/tampermonkey-5.5.0.xpi",
+            "version": "5.5.0",
+            "sha256": "190031c78dbc5696114835601f2c8e6b855ad1e134df5df278f8fc158c065908",
+            "installation": "Official signed AMO XPI"
+          },
+          "addonId": "firefox@tampermonkey.net",
+          "startupNavigation": [],
+          "error": "Error: Timeout: reflowed unmounted question aligns in one click\n    at wait (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:33:9)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:37:5\n    at async check (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:38:11)\n    at async navigationRegressions (file:///home/michael/workspace/project/chatgpt_plugins/tests/navigation-regressions.mjs:26:3)\n    at async sharedTests (file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:349:79)\n    at async file:///home/michael/workspace/project/chatgpt_plugins/tests/run.mjs:524:5",
+          "failureState": {
+            "url": "http://chatgpt.com/c/fixture-virtual-reflow",
+            "title": "窗口化会话回归",
+            "body": "窗口化会话：DOM 只保留附近消息，导航应列出全部提问\n第 8 个窗口化提问：项目应保留并能选择删除\n窗口化一级标题 8\n\n窗口化回复 8\n\n二级标题不进入子导航\n窗口化第二个一级标题 8\n第 9 个窗口化提问：项目应保留并能选择删除\n窗口化一级标题 9\n\n窗口化回复 9\n\n二级标题不进入子导航\n窗口化第二个一级标题 9\n第 10 个窗口化提问：项目应保留并能选择删除\n窗口化一级标题 10\n\n窗口化回复 10\n\n二级标题不进入子导航\n窗口化第二个一级标题 10\n第 11 个窗口化提问：项目应保留并能选择删除\n窗口化一级标题 11\n\n窗口化回复 11\n\n二级标题不进入子导航\n窗口化第二个一级标题 11",
+            "extension": true,
+            "roleNodes": 0
+          }
+        }
+      ],
+      "runtime": "Real Tampermonkey with UI-installed userscript, GM API calls and fixed-version @require libraries",
+      "finished": "2026-10-15T08:58:38.266Z",
+      "passed": false,
+      "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+      "bundleSHA256": {
+        "dist/chrome/content.js": "554243f3f7421783c07daf12b25f8fd6003ffa00223d955f3bd0e69c005180f4",
+        "dist/chrome/manifest.json": "a12e80e9bd4ae2d23f1ecc6a83370c3c4e708ad7cc1842b4de654c8b23f1c2c3",
+        "dist/firefox/content.js": "554243f3f7421783c07daf12b25f8fd6003ffa00223d955f3bd0e69c005180f4",
+        "dist/firefox/manifest.json": "b20b5ab7daa174e3878cb813d4ad302f7deba2e15bb161faa5eb0247a0a3c0e0"
+      },
+      "userscriptSHA256": "e12a4dfd348e1c746e43c0252bc6c277a957b0bc110127c53bdb4f8f63e03a5f"
+    }
+  },
+  "native": {
+    "started": "2026-10-15T09:02:32.142Z",
+    "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "engine": "156.0.8078.4",
+        "extension": "dist/chrome manifest unchanged, --load-extension",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "工具栏弹出页渲染与内容脚本消息开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          }
+        ],
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.75,
+            "settledOffset": 23.75
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.125,
+            "settledOffset": 24.125
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24.25,
+            "settledOffset": 24.25
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.625,
+            "settledOffset": 23.625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 311
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 311
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.875,
+            "firstFrame": {
+              "duration": 12.199999999254942,
+              "offset": 23.875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.78125
+          }
+        ]
+      },
+      {
+        "browser": "firefox",
+        "engine": "157.0",
+        "extension": "dist/firefox content unchanged; test-only HTTP chatgpt.com match added, browser-local HTTP proxy returns synthetic fixture without contacting ChatGPT",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "工具栏弹出页渲染与内容脚本消息开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          }
+        ],
+        "addonId": "conversation-navigator@local.extension",
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.800003051757812,
+            "settledOffset": 23.800003051757812
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 319
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 319
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.866668701171875,
+            "firstFrame": {
+              "duration": 0,
+              "offset": 23.866668701171875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.816665649414062
+          }
+        ]
+      }
+    ],
+    "runtime": "WebExtension",
+    "finished": "2026-10-15T09:03:56.878Z",
+    "passed": true,
+    "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+    "bundleSHA256": {
+      "dist/chrome/content.js": "ea91958b342caa5f3fa9d075e8e85262e3ee6e9ee21c49c4316193ceadc930bf",
+      "dist/chrome/manifest.json": "92bf0bdb5152ff986a8b9e7c4f2efb2b78767e1fe7caf36bb4bfce63035343fa",
+      "dist/firefox/content.js": "ea91958b342caa5f3fa9d075e8e85262e3ee6e9ee21c49c4316193ceadc930bf",
+      "dist/firefox/manifest.json": "eef603352f3bb77bb534ce6d8b24e38841fb38335d278c45a7ba50701280a986"
+    }
+  },
+  "userscript": {
+    "started": "2026-10-15T09:02:32.151Z",
+    "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "engine": "156.0.8078.4",
+        "extension": "Official Tampermonkey CRX unpacked with original ID; own WebExtension NOT loaded; production .user.js imported through manager UI",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "真实 Tampermonkey 菜单注册与导航开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          }
+        ],
+        "manager": {
+          "url": "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=156.0.8078.4&acceptformat=crx2,crx3&x=id%3Ddhdgffkkebhmkfjojejmpbldmpobfkfo%26uc",
+          "version": "5.5.1",
+          "sha256": "b5167937817e636adeba462ed9bf9b32ff01c2888f78a9afc6aa4f8e655fe872",
+          "installation": "Official CRX unpacked with its signed-header public key; implementation files unchanged"
+        },
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.75,
+            "settledOffset": 23.75
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.125,
+            "settledOffset": 24.125
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24.25,
+            "settledOffset": 24.25
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.625,
+            "settledOffset": 23.625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 313
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 313
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.875,
+            "firstFrame": {
+              "duration": 10.699999999254942,
+              "offset": 23.875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.78125
+          }
+        ]
+      },
+      {
+        "browser": "firefox",
+        "engine": "157.0",
+        "extension": "Official signed Tampermonkey XPI; own WebExtension NOT installed; UI-imported userscript with test-only HTTP ChatGPT match",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "真实 Tampermonkey 菜单注册与导航开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          }
+        ],
+        "manager": {
+          "url": "https://addons.mozilla.org/firefox/downloads/file/4797143/tampermonkey-5.5.0.xpi",
+          "version": "5.5.0",
+          "sha256": "190031c78dbc5696114835601f2c8e6b855ad1e134df5df278f8fc158c065908",
+          "installation": "Official signed AMO XPI"
+        },
+        "addonId": "firefox@tampermonkey.net",
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.800003051757812,
+            "settledOffset": 23.800003051757812
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 322
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 319
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.866668701171875,
+            "firstFrame": {
+              "duration": 0,
+              "offset": 23.866668701171875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.816665649414062
+          }
+        ]
+      }
+    ],
+    "runtime": "Real Tampermonkey with UI-installed userscript, GM API calls and fixed-version @require libraries",
+    "finished": "2026-10-15T09:05:36.910Z",
+    "passed": true,
+    "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+    "bundleSHA256": {
+      "dist/chrome/content.js": "ea91958b342caa5f3fa9d075e8e85262e3ee6e9ee21c49c4316193ceadc930bf",
+      "dist/chrome/manifest.json": "92bf0bdb5152ff986a8b9e7c4f2efb2b78767e1fe7caf36bb4bfce63035343fa",
+      "dist/firefox/content.js": "ea91958b342caa5f3fa9d075e8e85262e3ee6e9ee21c49c4316193ceadc930bf",
+      "dist/firefox/manifest.json": "eef603352f3bb77bb534ce6d8b24e38841fb38335d278c45a7ba50701280a986"
+    },
+    "userscriptSHA256": "4165344bfe0f1d699f8b3c23345e16e7b3487dd4867acd3057e71116ac0dc62a"
+  },
+  "benchmark": {
+    "browser": "156.0.8078.4",
+    "recorded": "2026-10-15T09:03:33.448Z",
+    "baseline": "b20bc04",
+    "scope": "Real Chromium, fixed rendered 1500-turn DOM, direct inventory module; excludes collection/UI rendering.",
+    "sourceSHA256": {
+      "baseline": "f75c11c4a9973bf2792887c704d7ac15fc7648581994dd36927a7c9882827e17",
+      "candidate": "d2b8f9b95e45b11870ceff476941f594f0a22dbb78975a954b43dfc53b9cd96b"
+    },
+    "samples": [
+      {
+        "label": "baseline",
+        "initialMilliseconds": 56.80000000074506,
+        "streaming100Milliseconds": 56.600000001490116,
+        "resolve100Milliseconds": 73.30000000074506,
+        "unchangedMerge10SortCalls": 15000,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "candidate",
+        "initialMilliseconds": 35.69999999925494,
+        "streaming100Milliseconds": 36.900000002235174,
+        "resolve100Milliseconds": 0.30000000074505806,
+        "unchangedMerge10SortCalls": 0,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "candidate",
+        "initialMilliseconds": 35.5,
+        "streaming100Milliseconds": 33.80000000074506,
+        "resolve100Milliseconds": 0.3999999985098839,
+        "unchangedMerge10SortCalls": 0,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "baseline",
+        "initialMilliseconds": 52.5,
+        "streaming100Milliseconds": 54.400000002235174,
+        "resolve100Milliseconds": 73.5,
+        "unchangedMerge10SortCalls": 15000,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      }
+    ],
+    "correctness": {
+      "passed": true,
+      "windows": 126,
+      "tested": [
+        "overlapping/disconnected windows",
+        "complete ordering",
+        "same-key node replacement",
+        "streamed H1 and duplicate H1 keys",
+        "unmounted directions",
+        "empty window",
+        "duplicate keys and graph cycles"
+      ]
+    }
+  },
+  "packages": {
+    "conversation-navigator-0.3.2.user.js": {
+      "bytes": 61741,
+      "sha256": "4165344bfe0f1d699f8b3c23345e16e7b3487dd4867acd3057e71116ac0dc62a"
+    },
+    "conversation-navigator-chrome-0.3.2.zip": {
+      "bytes": 26500,
+      "sha256": "eccc6fb4fe1c1fc5ea05e6d93f359884855dddeefee9be9de763275ece40030b"
+    },
+    "conversation-navigator-firefox-0.3.2.zip": {
+      "bytes": 26618,
+      "sha256": "e50c48d1acfb4744a01c0585b581d33e523f9fbee0033bc70f0d4a312555e30b"
+    }
+  },
+  "checks": {
+    "webExtLint": {
+      "errors": 0,
+      "notices": 0,
+      "warnings": 0
+    },
+    "userscript": "passed",
+    "packagedHashesMatchTests": true
+  },
+  "delivery": {
+    "local": true,
+    "published": false,
+    "greasyForkVersion": "0.3.1"
+  },
+  "scope": "Controlled real Chrome/Firefox and official Tampermonkey; synthetic content using reported layout conditions, not a direct acceptance of the current private Firefox session"
+}
