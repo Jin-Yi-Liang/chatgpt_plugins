@@ -11,6 +11,8 @@ import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { experienceTests } from './experience.mjs';
 import { navigationRegressions } from './navigation-regressions.mjs';
+import { distantNavigationTests } from './distant-navigation.mjs';
+import { recycledConversation } from './recycled-fixture.mjs';
 import { modernConversation } from './modern-fixture.mjs';
 import { scrollConversation, virtualConversation, preloadedTallConversation } from './scroll-fixture.mjs';
 import { installChromeScript, installFirefoxScript, firefoxTestScript, chromeManagerId, firefoxManagerUUID } from './tampermonkey.mjs';
@@ -46,6 +48,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
+  if (!process.env.TEST_ONLY_DISTANT) {
   if (!process.env.TEST_ONLY_STARTUP) {
   if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
@@ -224,7 +227,7 @@ async function sharedTests(ui, entry) {
       const text = await ui.download(); assert.ok(text.includes('兼容回复一') && text.includes('兼容回复二'));
     }
   });
-  await check(userscriptMode ? '真实 Tampermonkey 菜单注册与导航开关' : '工具栏弹出页渲染与内容脚本消息开关', async () => { await ui.popup(); });
+  await check(userscriptMode ? '真实 Tampermonkey 菜单注册与导航开关' : '工具栏弹出页渲染与内容脚本消息开关', async () => { await ui.popup(); await pause(300); });
   }
   const offset = index => ui.eval(index => {
     const scroller = document.querySelector('.thread-scroll-container');
@@ -347,10 +350,13 @@ async function sharedTests(ui, entry) {
   if (!process.env.TEST_ONLY_NAVIGATION) await experienceTests(ui, { check, shadow, wait, pause, artifactDir, entry });
   }
   if (!process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION) await navigationRegressions(ui, { check, shadow, wait, pause, entry });
+  }
+  if (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
+const htmlFor = url => url.includes('fixture-recycled-') ? recycledConversation(url.includes('reverse'))
+  : url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
   : url.includes('fixture-experience-100') ? scrollConversation(false, 100)
   : url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))
   : url.includes('fixture-virtual') ? virtualConversation()
@@ -470,8 +476,26 @@ if (browserList.includes('firefox')) {
     const element = selector => driver.executeScript('return document.querySelector("#conversation-navigator-root").shadowRoot.querySelector(arguments[0])', selector);
     const ui = {
       errors: [], eval: (fn, arg) => driver.executeScript(`return (${fn.toString()})(arguments[0])`, arg ?? null),
-      goto: route => driver.get(`${origin}${route}`), reload: () => driver.navigate().refresh(),
-      click: async selector => (await element(selector)).click(),
+      goto: async route => {
+        await driver.get(`${origin}${route}`);
+        // The manager may asynchronously open its welcome tab after installation.
+        // Keep this synthetic conversation selected so Firefox does not throttle rAF.
+        const content = await driver.getWindowHandle();
+        for (const handle of await driver.getAllWindowHandles()) {
+          if (handle !== content) { await driver.switchTo().window(handle); await driver.close(); }
+        }
+        await driver.switchTo().window(content);
+        await wait(async () => await driver.executeScript('return document.visibilityState') === 'visible', 'foreground Firefox fixture');
+      }, reload: () => driver.navigate().refresh(),
+      click: async selector => {
+        const content = await driver.getWindowHandle();
+        for (const handle of await driver.getAllWindowHandles()) {
+          if (handle !== content) { await driver.switchTo().window(handle); await driver.close(); }
+        }
+        await driver.switchTo().window(content);
+        await wait(async () => await driver.executeScript('return document.visibilityState') === 'visible', 'foreground Firefox click');
+        await (await element(selector)).click();
+      },
       press: async (selector, key) => (await element(selector)).sendKeys(({Enter: Key.ENTER, Escape: Key.ESCAPE, Space: Key.SPACE, Tab: Key.TAB})[key] || key),
       fill: async (selector, value) => { const el = await element(selector); await el.clear(); if (value) await el.sendKeys(value); else await driver.executeScript('arguments[0].dispatchEvent(new Event("input", {bubbles:true}))', el); },
       select: async (selector, value) => driver.executeScript('const el=document.querySelector("#conversation-navigator-root").shadowRoot.querySelector(arguments[0]);el.value=arguments[1];el.dispatchEvent(new Event("change",{bubbles:true}))', selector, value),
@@ -503,9 +527,9 @@ if (browserList.includes('firefox')) {
           const handles=await driver.getAllWindowHandles();
           await driver.switchTo().window(original);
           await wait(async () => await ui.eval(() => document.querySelector('#conversation-navigator-root').shadowRoot.querySelector('.panel').hidden), 'Firefox GM menu');
-          await ui.click('#expand');
           for(const handle of handles.filter(handle=>handle!==original)){await driver.switchTo().window(handle);await driver.close();}
           await driver.switchTo().window(original);
+          await ui.click('#expand');
           return;
         }
         const contentHandle = await driver.getWindowHandle();
@@ -516,9 +540,9 @@ if (browserList.includes('firefox')) {
         await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.tabs.sendMessage(arguments[0],{type:'conversation-navigator:toggle'}).then(()=>done(true));`, tabId);
         await driver.switchTo().window(contentHandle);
         assert.equal(await ui.eval(() => document.querySelector('#conversation-navigator-root').shadowRoot.querySelector('.panel').hidden), true);
-        await ui.click('#expand');
         const handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles.find(handle => handle !== contentHandle)); await driver.close(); await driver.switchTo().window(contentHandle);
+        await ui.click('#expand');
       }
     };
     await sharedTests(ui, entry);

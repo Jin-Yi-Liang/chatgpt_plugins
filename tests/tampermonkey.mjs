@@ -36,7 +36,11 @@ export async function installFirefoxScript(driver, scriptFile) {
   }
   if (!installer) throw new Error('Firefox Tampermonkey install dialog did not open');
   await (await driver.findElement(By.xpath('//input[@value="Install"] | //button[normalize-space(.)="Install"]'))).click();
-  await driver.switchTo().window((await driver.getAllWindowHandles())[0]);
+  const content = (await driver.getAllWindowHandles())[0];
+  for (const handle of await driver.getAllWindowHandles()) {
+    if (handle !== content) { await driver.switchTo().window(handle); await driver.close(); }
+  }
+  await driver.switchTo().window(content);
 }
 
 export async function firefoxTestScript(outputDirectory) {

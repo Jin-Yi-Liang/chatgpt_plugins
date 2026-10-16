@@ -1,6 +1,19 @@
 import { positionHint, hasLayout } from './navigation.js';
 import { hash } from './platforms.js';
 
+function owner(anchor) {
+  const shell = anchor.closest('[data-turn-key], article, [data-testid^="conversation-turn"]');
+  const shellIdentity = shell && ['data-turn-key', 'data-turn-id', 'data-testid'].map(attribute => ({ attribute, value: shell.getAttribute(attribute) })).find(item => item.value);
+  return { shell, shellIdentity };
+}
+function matches(shell, identity) {
+  return !identity || shell?.getAttribute(identity.attribute) === identity.value;
+}
+function ownedLayout(target) {
+  return hasLayout(target?.anchor) && matches(target.shell, target.shellIdentity)
+    && (!target.shell || target.shell.contains(target.anchor));
+}
+
 function headings(answers, old = []) {
   const counts = new Map();
   const previous = new Map(old.map(item => [item.key, item]));
@@ -9,7 +22,7 @@ function headings(answers, old = []) {
     const fingerprint = hash(title);
     const index = counts.get(fingerprint) || 0; counts.set(fingerprint, index + 1);
     const key = `heading:${fingerprint}:${index}`;
-    return { key, title, anchor, hint: positionHint(anchor) || previous.get(key)?.hint };
+    return { key, title, anchor, ...owner(anchor), hint: positionHint(anchor) || previous.get(key)?.hint };
   });
 }
 
@@ -96,18 +109,23 @@ export function createInventory() {
   const indices = new Map();
   let mountedStart = Infinity;
   let mountedEnd = -Infinity;
+  let mountedSamples = [];
   let lastResolveKey = '', lastResolveRefresh = -Infinity;
   function merge(turns) {
     let structureChanged = insertNewKeys(order, entries, turns);
+    const samples = [];
     for (let i = 0; i < turns.length; i++) {
       const turn = turns[i];
       const old = entries.get(turn.key);
-      const shell = turn.anchor.closest('[data-turn-key], article, [data-testid^="conversation-turn"]');
-      const identity = shell && ['data-turn-key', 'data-turn-id', 'data-testid'].map(attribute => ({ attribute, value: shell.getAttribute(attribute) })).find(item => item.value);
+      const { shell, shellIdentity: identity } = owner(turn.anchor);
+      const liveHint = positionHint(turn.anchor);
+      if (liveHint) samples.push({ key: turn.key, ...liveHint });
       entries.set(turn.key, { ...turn, shell: shell || old?.shell, shellIdentity: identity || old?.shellIdentity,
-        answers: turn.answers.length ? turn.answers : old?.answers || [], hint: positionHint(turn.anchor) || old?.hint });
+        answers: turn.answers.length ? turn.answers : old?.answers || [], hint: liveHint || old?.hint });
       const entry = entries.get(turn.key);
-      entry.headings = headings(entry.answers, old?.headings);
+      // Cached answer nodes may have been recycled for another turn. Only read
+      // headings from answers collected under the current question.
+      entry.headings = turn.answers.length ? headings(turn.answers, old?.headings) : old?.headings || [];
     }
     for (let i = 0; i < turns.length - 1; i++) {
       const key = turns[i].key, next = turns[i + 1].key;
@@ -122,6 +140,7 @@ export function createInventory() {
       sortOrder(order, entries, following);
       order.forEach((key, index) => indices.set(key, index));
     }
+    mountedSamples = samples.map(sample => ({ ...sample, index: indices.get(sample.key) }));
     mountedStart = Infinity; mountedEnd = -Infinity;
     for (const { key } of turns) {
       const index = indices.get(key);
@@ -135,26 +154,34 @@ export function createInventory() {
     let entry = entries.get(key);
     if (!entry) return null;
     let target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
-    if (!hasLayout(target?.anchor) && (lastResolveKey !== key || performance.now() - lastResolveRefresh >= 150)) {
+    if (!ownedLayout(target) && (lastResolveKey !== key || performance.now() - lastResolveRefresh >= 150)) {
       lastResolveKey = key; lastResolveRefresh = performance.now();
       merge(collect()); entry = entries.get(key);
       target = headingKey ? entry.headings.find(heading => heading.key === headingKey) : entry;
     }
     const index = indices.get(key);
     const direction = mountedStart === Infinity ? 0 : index < mountedStart ? -1 : index > mountedEnd ? 1 : 0;
-    const anchor = hasLayout(target?.anchor) ? target.anchor : null;
+    const anchor = ownedLayout(target) ? target.anchor : null;
     let hint = target?.hint || entry.hint;
     let source = 'history';
     if (!anchor) {
       // The body may be unmounted while its current placeholder still exists.
       // Cached offsets can be hundreds of thousands of pixels stale after reflow.
       let shell = entry.shell;
-      if (!hasLayout(shell) && entry.shellIdentity) {
+      if ((!hasLayout(shell) || !matches(shell, entry.shellIdentity)) && entry.shellIdentity) {
         const { attribute, value } = entry.shellIdentity;
         shell = [...document.querySelectorAll(`[${attribute}="${CSS.escape(value)}"]`)].find(hasLayout);
       }
       const currentHint = positionHint(shell);
-      if (currentHint) { hint = currentHint; source = 'shell'; }
+      if (currentHint && matches(shell, entry.shellIdentity)) { hint = currentHint; source = 'shell'; }
+      else {
+        const sample = mountedSamples.find(item => item.container.isConnected);
+        if (sample) {
+          const positions = mountedSamples.filter(item => item.container === sample.container).map(({ index, top }) => ({ index, top }));
+          hint = { ...(hint || sample), container: sample.container, search: { index, count: order.length, positions } };
+          source = 'index';
+        }
+      }
     }
     // A reply can mount before its headings. Keep the requested key pending while
     // the page finishes rendering instead of silently cancelling the navigation.

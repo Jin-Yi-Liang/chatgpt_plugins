@@ -22,6 +22,30 @@ export function hasLayout(anchor) {
   return [...anchor.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
 }
 
+// A virtual list can remove the entire target shell. Search by the ordered
+// messages currently mounted, narrowing coordinates instead of walking one screen.
+function seekIndex(run, hint) {
+  const { container, search } = hint;
+  const range = Math.max(0, container.scrollHeight - container.clientHeight);
+  const reverse = getComputedStyle(container).flexDirection === 'column-reverse';
+  const min = reverse ? -range : 0, max = reverse ? 0 : range;
+  let bounds = run.bounds;
+  if (!bounds || bounds.container !== container || Math.abs(bounds.range - range) > 2) {
+    bounds = run.bounds = { container, range, low: { index: -1, top: min }, high: { index: search.count, top: max } };
+  }
+  for (const sample of search.positions) {
+    if (sample.index < search.index && sample.index > bounds.low.index) bounds.low = sample;
+    if (sample.index > search.index && sample.index < bounds.high.index) bounds.high = sample;
+  }
+  const { low, high } = bounds;
+  const span = high.top - low.top;
+  if (span <= 2) return container.scrollTop;
+  const ratio = (search.index - low.index) / (high.index - low.index);
+  // Avoid arbitrarily small probes when the remaining messages differ in height.
+  const top = low.top + span * Math.max(0.1, Math.min(0.9, ratio));
+  return Math.max(min, Math.min(max, top));
+}
+
 export function createNavigation() {
   let current = null;
   function cancel() {
@@ -80,9 +104,11 @@ export function createNavigation() {
           if (target.hint?.container?.isConnected && now - run.lastSeek > 100) {
             const { container, top, direction = 0, source } = target.hint;
             // A live shell position may move during mounting: always follow its
-            // latest geometry. Only historical hints need a window-by-window search.
-            const destination = source === 'shell' || run.lastSeek === -Infinity ? top
-              : container.scrollTop + direction * viewport(container).height * 0.8;
+            // latest geometry. Missing shells use fresh message indices to narrow the search.
+            const destination = source === 'shell' ? top
+              : target.hint.search && (run.lastSeek !== -Infinity || !Number.isFinite(top)) ? seekIndex(run, target.hint)
+                : run.lastSeek === -Infinity ? top
+                  : container.scrollTop + direction * viewport(container).height * 0.8;
             if (Math.abs(destination - container.scrollTop) > 1) container.scrollTo({ top: destination, behavior: 'instant' });
             run.lastSeek = now;
           }
