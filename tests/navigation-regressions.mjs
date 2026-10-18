@@ -54,7 +54,7 @@ export async function navigationRegressions(ui, { check, shadow, wait, pause, en
     }, 'return to last virtual window');
     await pause(1100);
     await ui.click('.row[data-key="id:virtual-3"] .heading-toggle');
-    await ui.click('.row[data-key="id:virtual-3"] .heading-jump:nth-child(2)');
+    await ui.click('.row[data-key="id:virtual-3"] .heading-list > .heading-item:nth-child(2) > .heading-line > .heading-jump');
     await wait(async () => {
       const offset = await position('[data-turn-key="virtual-3"] h1:last-child');
       return offset !== null && Math.abs(offset - 16) <= 3;
@@ -77,7 +77,7 @@ export async function navigationRegressions(ui, { check, shadow, wait, pause, en
       const prefix = `.row[data-key="id:virtual-${scenario.index}"]`;
       if (scenario.id === 'heading') {
         await ui.click(`${prefix} .heading-toggle`);
-        await ui.click(`${prefix} .heading-jump:nth-child(2)`);
+        await ui.click(`${prefix} .heading-list > .heading-item:nth-child(2) > .heading-line > .heading-jump`);
       } else await ui.click(`${prefix} .jump`);
       const selector = `[data-turn-key="virtual-${scenario.index}"] ${scenario.id === 'heading' ? 'h1:last-child' : '[data-user-message-bubble]'}`;
       await wait(async () => {

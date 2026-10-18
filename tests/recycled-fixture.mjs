@@ -1,4 +1,4 @@
-export function recycledConversation(reverse = false, count = 64) {
+export function recycledConversation(reverse = false, count = 64, nested = false) {
   return `<!doctype html><meta charset="utf-8"><title>整轮 DOM 回收与远距离跳转</title><style>
   body{margin:0;font:16px/1.5 system-ui}header{height:70px}.thread-scroll-container{height:760px;border:3px solid #ccc;overflow:auto;overflow-anchor:none;scroll-padding-top:24px;display:flex;flex-direction:${reverse ? 'column-reverse' : 'column'}}.transcript{width:740px;flex-shrink:0;padding-top:32px;margin:0 auto}.recycled-turn{display:flow-root;box-sizing:border-box;overflow:hidden}[data-user-message-bubble]{margin:12px 0;padding:16px;background:#eaf5f0}[data-markdown-text-style]{padding:16px}h1{font-size:24px}
   </style><header>相邻跳转与跨区跳转应同样可靠；不保留目标占位 DOM</header><main><div class="thread-scroll-container"><div class="transcript" data-chatgpt-conversation-selection-target></div></div></main><textarea id="paste-target"></textarea><script>
@@ -13,6 +13,12 @@ export function recycledConversation(reverse = false, count = 64) {
     node.querySelector('[data-user-message-bubble]').textContent='第 '+(index+1)+' 个整轮回收提问';
     node.querySelector('[data-chatgpt-selection-message-id]').setAttribute('data-chatgpt-selection-message-id','answer-'+(index+1));
     node.querySelectorAll('h1')[0].textContent='回收一级标题 '+(index+1);
+    if(${nested}) {
+      const body=node.querySelector('[data-markdown-text-style]');
+      if(!body.querySelector('h2')){const h2=document.createElement('h2'),h3=document.createElement('h3');body.insertBefore(h2,body.lastElementChild);body.insertBefore(h3,body.lastElementChild);}
+      body.querySelector('h2').textContent='回收二级标题 '+(index+1);
+      body.querySelector('h3').textContent='回收三级标题 '+(index+1);
+    }
     node.querySelectorAll('h1')[1].textContent='回收第二个标题 '+(index+1);
   }
   function render() {

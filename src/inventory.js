@@ -17,12 +17,23 @@ function ownedLayout(target) {
 function headings(answers, old = []) {
   const counts = new Map();
   const previous = new Map(old.map(item => [item.key, item]));
-  return answers.flatMap(answer => [...answer.querySelectorAll('h1')]).filter(node => !node.closest('[data-testid*="reasoning"], [data-testid*="thinking"], [hidden], [aria-hidden="true"]')).map(anchor => {
-    const title = anchor.textContent.replace(/\s+/g, ' ').trim();
-    const fingerprint = hash(title);
-    const index = counts.get(fingerprint) || 0; counts.set(fingerprint, index + 1);
-    const key = `heading:${fingerprint}:${index}`;
-    return { key, title, anchor, ...owner(anchor), hint: positionHint(anchor) || previous.get(key)?.hint };
+  return answers.flatMap(answer => {
+    // Each answer starts its own outline; a later reply cannot become a child
+    // of a heading in an earlier reply attached to the same question.
+    const stack = [];
+    return [...answer.querySelectorAll('h1, h2, h3')].filter(node => !node.closest('[data-testid*="reasoning"], [data-testid*="thinking"], [hidden], [aria-hidden="true"]')).map(anchor => {
+      const title = anchor.textContent.replace(/\s+/g, ' ').trim();
+      const level = Number(anchor.tagName.slice(1));
+      const fingerprint = hash(title);
+      const identity = `${level}:${fingerprint}`;
+      const index = counts.get(identity) || 0; counts.set(identity, index + 1);
+      // Keep the existing H1 identity, so streamed updates retain its controls.
+      const key = `heading:${level === 1 ? '' : `${level}:`}${fingerprint}:${index}`;
+      while (stack.length && stack.at(-1).level >= level) stack.pop();
+      const heading = { key, title, level, parentKey: stack.at(-1)?.key || null, anchor, ...owner(anchor), hint: positionHint(anchor) || previous.get(key)?.hint };
+      stack.push(heading);
+      return heading;
+    });
   });
 }
 

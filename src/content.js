@@ -40,7 +40,7 @@ async function start() {
   const collect = () => adapter.collect(document, settings.mode);
   function accept(observed) {
     turns = inventory.merge(observed);
-    const nextSignature = JSON.stringify(turns.map(turn => [turn.key, turn.prompt, turn.answers.length, turn.headings.map(heading => [heading.key, heading.title])]));
+    const nextSignature = JSON.stringify(turns.map(turn => [turn.key, turn.prompt, turn.answers.length, turn.headings.map(heading => [heading.key, heading.title, heading.level, heading.parentKey])]));
     if (nextSignature !== signature) { signature = nextSignature; render(); }
     else updateButtons();
   }
@@ -105,7 +105,7 @@ async function start() {
       ? inventory.resolve(key, collect, headingKey) : { cancelled: true });
     if (attempt !== jumpGeneration || conversation !== scope || location.href !== route) return;
     if (result.cancelled) notify('定位已停止。');
-    else if (result.success) notify(headingKey ? '已定位到回复一级标题。' : '已定位到提问。');
+    else if (result.success) notify(headingKey ? '已定位到回复标题。' : '已定位到提问。');
     else notify(result.reason === 'timeout' ? '定位未完成：目标仍未加载或页面持续重排，请稍后重试。' : '该目标暂时不可用，请等待页面加载后重试。');
   }
   let highlightedRow = null;
@@ -176,8 +176,8 @@ async function start() {
       (rowCache.get(nextKey)?.delete || $('#search')).focus({ preventScroll: true });
     });
     parts['heading-toggle'].addEventListener('click', () => { expanded.has(key) ? expanded.delete(key) : expanded.add(key); render(); });
-    const group = document.createElement('div'); group.className = 'heading-list';
-    return { row, checkbox, group, headingButtons: new Map(), ...parts };
+    const group = document.createElement('div'); group.className = 'heading-list'; group.setAttribute('role', 'list'); group.setAttribute('aria-label', '回复标题');
+    return { row, checkbox, group, headingNodes: new Map(), headingExpanded: new Set(), ...parts };
   }
   function patchRow(parts, turn, index) {
     const label = titles[turn.key] || turn.prompt;
@@ -191,25 +191,59 @@ async function start() {
     const open = expanded.has(turn.key) && !!turn.headings.length;
     const toggle = parts['heading-toggle'];
     toggle.disabled = !turn.headings.length;
-    toggle.title = turn.headings.length ? `${open ? '收起' : '展开'}回复一级标题（${turn.headings.length}）` : '回复暂无一级标题';
-    toggle.setAttribute('aria-label', `${open ? '收起' : '展开'}第 ${index} 条回复一级标题`);
+    toggle.title = turn.headings.length ? `${open ? '收起' : '展开'}回复标题（H1–H3，共 ${turn.headings.length} 项）` : '回复暂无一至三级标题';
+    toggle.setAttribute('aria-label', `${open ? '收起' : '展开'}第 ${index} 条回复标题`);
     toggle.setAttribute('aria-expanded', String(open)); setText(toggle, open ? '▾' : '▸');
+    const keys = new Set(turn.headings.map(heading => heading.key));
+    for (const key of parts.headingNodes.keys()) if (!keys.has(key)) { parts.headingNodes.delete(key); parts.headingExpanded.delete(key); }
     if (open) {
-      const buttons = turn.headings.map(heading => {
-        let button = parts.headingButtons.get(heading.key);
-        if (!button) {
-          button = document.createElement('button'); button.className = 'heading-jump';
-          button.addEventListener('click', () => jump(turn.key, heading.key));
-          parts.headingButtons.set(heading.key, button);
-        }
-        setText(button, heading.title); button.title = heading.title; return button;
-      });
-      const keys = new Set(turn.headings.map(heading => heading.key));
-      for (const key of parts.headingButtons.keys()) if (!keys.has(key)) parts.headingButtons.delete(key);
-      reconcile(parts.group, buttons);
+      const children = new Map();
+      for (const heading of turn.headings) {
+        const parent = keys.has(heading.parentKey) ? heading.parentKey : null;
+        if (!children.has(parent)) children.set(parent, []);
+        children.get(parent).push(heading);
+      }
+      function outline(parent) {
+        return (children.get(parent) || []).map(heading => {
+          let node = parts.headingNodes.get(heading.key);
+          if (!node) {
+            const item = document.createElement('div'); item.className = 'heading-item'; item.setAttribute('role', 'listitem'); item.dataset.headingKey = heading.key;
+            const line = document.createElement('div'); line.className = 'heading-line';
+            const button = document.createElement('button'); button.className = 'heading-jump';
+            button.addEventListener('click', () => jump(turn.key, heading.key));
+            const toggle = document.createElement('button'); toggle.className = 'heading-children-toggle';
+            toggle.addEventListener('click', () => {
+              parts.headingExpanded.has(heading.key) ? parts.headingExpanded.delete(heading.key) : parts.headingExpanded.add(heading.key);
+              render();
+            });
+            const group = document.createElement('div'); group.className = 'heading-children'; group.setAttribute('role', 'list');
+            line.append(button); item.append(line);
+            node = { item, line, button, toggle, group }; parts.headingNodes.set(heading.key, node);
+          }
+          node.item.dataset.level = heading.level;
+          setText(node.button, heading.title); node.button.title = heading.title;
+          node.button.setAttribute('aria-label', `${heading.level}级标题：${heading.title}`);
+          const hasChildren = children.has(heading.key);
+          const childOpen = hasChildren && parts.headingExpanded.has(heading.key);
+          if (hasChildren) {
+            if (node.toggle.parentNode !== node.line) node.line.append(node.toggle);
+            node.toggle.setAttribute('aria-expanded', String(childOpen));
+            node.toggle.setAttribute('aria-label', `${childOpen ? '收起' : '展开'}“${heading.title}”的子标题`);
+            node.toggle.title = `${childOpen ? '收起' : '展开'}子标题`;
+            setText(node.toggle, childOpen ? '▾' : '▸');
+          } else node.toggle.remove();
+          if (childOpen) {
+            reconcile(node.group, outline(heading.key));
+            if (node.group.parentNode !== node.item) node.item.append(node.group);
+          } else node.group.remove();
+          return node.item;
+        });
+      }
+      reconcile(parts.group, outline(null));
       if (parts.group.parentNode !== parts.row) parts.row.insertBefore(parts.group, parts.row.querySelector('.editor'));
     } else parts.group.remove();
   }
+
   function render() {
     const list = $('.list');
     const previousScroll = list.scrollTop;

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { experienceTests } from './experience.mjs';
 import { navigationRegressions } from './navigation-regressions.mjs';
+import { headingOutlineTests } from './heading-outline.mjs';
 import { distantNavigationTests } from './distant-navigation.mjs';
 import { recycledConversation } from './recycled-fixture.mjs';
 import { modernConversation } from './modern-fixture.mjs';
@@ -48,7 +49,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
-  if (!process.env.TEST_ONLY_DISTANT) {
+  if (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_HEADINGS) {
   if (!process.env.TEST_ONLY_STARTUP) {
   if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
@@ -310,13 +311,13 @@ async function sharedTests(ui, entry) {
     assert.equal(await shadow(root => root.querySelector('.row[data-key="id:virtual-3"] .heading-list').querySelectorAll('.heading-jump').length), 2);
     assert.equal(await shadow(root => root.querySelectorAll('.heading-list .edit, .heading-list .delete, .heading-list input').length), 0);
     assert.ok(!await shadow(root => root.querySelector('.heading-list').textContent.includes('二级标题')));
-    await ui.click('.row[data-key="id:virtual-3"] .heading-jump:nth-child(1)');
+    await ui.click('.row[data-key="id:virtual-3"] .heading-list > .heading-item:nth-child(1) > .heading-line > .heading-jump');
     await wait(async () => await ui.eval(() => {
       const h = document.querySelector('[data-turn-key="virtual-3"] h1'); if(!h)return false;
       const s = document.querySelector('.thread-scroll-container'); return Math.abs(h.getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop-16)<=3;
     }), 'H1 navigation');
     await pause(1100);
-    await ui.click('.row[data-key="id:virtual-3"] .heading-jump:nth-child(2)');
+    await ui.click('.row[data-key="id:virtual-3"] .heading-list > .heading-item:nth-child(2) > .heading-line > .heading-jump');
     await wait(async () => await ui.eval(() => {
       const h = document.querySelectorAll('[data-turn-key="virtual-3"] h1')[1]; if(!h)return false;
       const s = document.querySelector('.thread-scroll-container'); return Math.abs(h.getBoundingClientRect().top-s.getBoundingClientRect().top-s.clientTop-16)<=3;
@@ -351,11 +352,13 @@ async function sharedTests(ui, entry) {
   }
   if (!process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION) await navigationRegressions(ui, { check, shadow, wait, pause, entry });
   }
-  if (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
+  if (!process.env.TEST_ONLY_HEADINGS && (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
+  if (process.env.TEST_ONLY_HEADINGS || (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await headingOutlineTests(ui, { check, shadow, wait, pause, artifactDir, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-recycled-') ? recycledConversation(url.includes('reverse'))
+const htmlFor = url => url.includes('fixture-heading-virtual') ? recycledConversation(false, 64, true)
+  : url.includes('fixture-recycled-') ? recycledConversation(url.includes('reverse'))
   : url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
   : url.includes('fixture-experience-100') ? scrollConversation(false, 100)
   : url.includes('fixture-scroll-') ? scrollConversation(url.includes('reverse'))

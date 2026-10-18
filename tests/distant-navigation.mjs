@@ -28,7 +28,7 @@ export async function distantNavigationTests(ui, { check, shadow, wait, pause, e
         const before=await ui.eval(()=>window.recyclingStats.inputs);
         if(heading)await ui.click(`.row[data-key="id:recycled-${index}"] .heading-toggle`);
         const began=Date.now();
-        await ui.click(`.row[data-key="id:recycled-${index}"] ${heading?'.heading-jump:nth-child(2)':'.jump'}`);
+        await ui.click(`.row[data-key="id:recycled-${index}"] ${heading?'.heading-list > .heading-item:nth-child(2) > .heading-line > .heading-jump':'.jump'}`);
         const deadline=Date.now()+Number(process.env.TEST_DISTANT_TIMEOUT||5000);
         let sample; const trace=[];
         do{sample=await geometry(index,heading);trace.push({...sample,at:Date.now()-began});if(sample.offset!==null&&Math.abs(sample.offset-24)<=3&&sample.status.startsWith('已定位'))break;await pause(80);}while(Date.now()<deadline);
