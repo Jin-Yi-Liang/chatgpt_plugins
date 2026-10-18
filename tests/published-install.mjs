@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { chromeManagerId, firefoxManagerUUID, installChromeScript } from './tampermonkey.mjs';
 import { conversation } from './fixture.mjs';
 
+const publicConversation = conversation.replace('<h2>第一份回复</h2>', '<h1>公开一级标题</h1><p style="height:1000px">公开安装验收</p><h2>公开二级标题</h2><p style="height:1000px">二级正文</p><h3 id="public-h3">公开三级标题</h3>');
+
 // Tests the public distribution path in fresh profiles, without the author's login.
 const root = process.cwd();
 const artifacts = path.resolve(process.env.PUBLICATION_ARTIFACT_DIR || 'artifacts/publication');
@@ -46,7 +48,7 @@ try {
     upgradeFromVersion = previousCode.match(/^\/\/\s+@version\s+(\S+)/m)?.[1];
     assert.ok(upgradeFromVersion, 'old release version metadata');
     await installChromeScript(context, page, path.resolve(process.env.PUBLICATION_UPGRADE_FROM));
-    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: conversation }));
+    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: publicConversation }));
     upgradedContent = await context.newPage();
     await upgradedContent.goto('https://chatgpt.com/c/public-install-smoke');
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'old release runs before upgrade');
@@ -74,7 +76,7 @@ try {
   await page.screenshot({ path: path.join(artifacts, 'chrome-public-installed.png') });
   // Exercise the publicly installed production script with controlled HTTPS data.
   // Use a fresh content tab: the installer's final dashboard redirect can be delayed.
-  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: conversation }));
+  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: publicConversation }));
   const content = upgradedContent || await context.newPage();
   if (upgradedContent) await content.reload();
   else await content.goto('https://chatgpt.com/c/public-install-smoke');
@@ -83,8 +85,16 @@ try {
   if (upgradedContent) assert.equal(await content.locator('#conversation-navigator-root .row[data-key="id:user-1"] .title').textContent(), '升级后应保留的标题');
   await content.locator('#conversation-navigator-root .row[data-key="id:user-3"] .jump').click();
   await until(() => content.evaluate(() => document.querySelector('[data-message-id="user-3"]').getBoundingClientRect().top < innerHeight), 'public Chrome navigation');
+  const outline = content.locator('#conversation-navigator-root .row[data-key="id:user-1"]');
+  await outline.locator('.heading-toggle').click();
+  assert.equal(await outline.locator('.heading-jump').count(), 1, 'only H1 initially visible');
+  await outline.locator('.heading-item[data-level="1"] > .heading-line > .heading-children-toggle').click();
+  assert.equal(await outline.locator('.heading-item[data-level="3"]').count(), 0, 'H3 initially closed');
+  await outline.locator('.heading-item[data-level="2"] > .heading-line > .heading-children-toggle').click();
+  await outline.locator('.heading-item[data-level="3"] > .heading-line > .heading-jump').click();
+  await until(() => content.evaluate(() => Math.abs(document.querySelector('#public-h3').getBoundingClientRect().top - 16) <= 3), 'public H3 navigation');
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
-    productionHTTPSFixture: 'Actual navigation click passed',
+    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true,
     upgrade: upgradedContent ? { from: upgradeFromVersion, to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];

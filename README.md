@@ -1,14 +1,14 @@
 # 对话导航 · ChatGPT
 
-在 ChatGPT 网页右侧添加按用户提问组织的目录，支持单击定位、自定义标题、删除导航项、折叠的回复一级标题导航，以及多选回复复制 / 导出 Markdown。
+在 ChatGPT 网页右侧添加按用户提问组织的目录，支持单击定位、自定义标题、删除导航项、逐层折叠的回复 H1/H2/H3 导航，以及多选回复复制 / 导出 Markdown。
 
-**当前版本：v0.3.4。交付形式：Chrome / Firefox 浏览器扩展（Manifest V3）和 Tampermonkey 油猴脚本。**
+**当前版本：v0.4.0。交付形式：Chrome / Firefox 浏览器扩展（Manifest V3）和 Tampermonkey 油猴脚本。**
 
 - 运行网站：`https://chatgpt.com/*`、旧域名 `https://chat.openai.com/*`。
 - DeepSeek、Claude：已预留适配接口，尚未启用。
 - 油猴 / Tampermonkey：已实现完整 `.user.js`，Chrome 和 Firefox 的真实脚本管理器均通过验收。安装与发布步骤见 [油猴发布指南](docs/userscript-publishing.md)。
-- **直接安装 / 更新：[Greasy Fork 公开脚本页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)**，当前为 **v0.3.4**。已有用户可在油猴中检查更新，确认后刷新 ChatGPT。
-- 本轮分支：`fix/distant-navigation`，基于 `e9bb596`，实现提交 `043ddb2`。修复整轮消息被回收、历史坐标过期时远距离跳转停在中途，以及节点复用时定位到其他消息的问题。本轮提交和远程同步均在修复分支，保留 main；详见本版验收记录。
+- **直接安装 / 更新：[Greasy Fork 公开脚本页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)**，当前为 **v0.4.0**。已有用户可在油猴中检查更新，确认后刷新 ChatGPT。
+- 本轮分支：`codex/heading-outline`，从已整合旧分支的 `main`（`bf78d3e`）创建。v0.4.0 支持回复 H1/H2/H3 逐层折叠导航，详见本版验收记录。旧分支已合入并同步远程 main；本轮新功能按要求提交本地与 Greasy Fork，功能分支尚未推送远程。
 - 项目使用 MIT 许可，见 [LICENSE](LICENSE)。
 
 这是在浏览器中执行的内容脚本项目。**源码构建完成后，加载到浏览器即可运行，不需要启动本地 Web 服务。**
@@ -39,13 +39,13 @@
 | 独立滚轮 | 在导航面板中上下滚动；到达边界后不继续带动会话页面 |
 | 自定义标题 | 单独修改 / 恢复提问导航文字，按会话保存；回复更新时保留编辑草稿和光标 |
 | 删除导航项 | 删除目录中的项目，刷新后保留删除状态；原始对话保留，无手动添加入口 |
-| 回复 H1 子导航 | 提问后展开该问题对应模型回复的一级标题，默认关闭；子项只读且可定位 |
+| 回复三级标题目录 | 提问 → H1 → H2 → H3，逐级默认收起；点击箭头展开，点击文字定位，标题只读 |
 | Markdown | 多选问题，按对话顺序连续复制模型回复，或下载 `.md` 文件 |
 | 界面 | 支持收起、深色主题、窄屏，以及自动 / 兼容模式 |
 
-下面是油猴版的真实 Chromium 测试截图：目录包含 200 条提问，点击“当前提问”后只把目录滚到第 75 条，正文位置保持不动。
+下面是本版真实 Chromium 测试截图：提问已展开，章节 A 下的 A1 已展开到三级，其他分支保持收起。
 
-<img src="docs/images/navigation-0.3.1.png" alt="对话导航 v0.3.1：200 条目录与当前提问定位" width="850">
+<img src="docs/images/heading-outline-0.4.0.png" alt="对话导航 v0.4.0：H1/H2/H3 独立分层展开" width="850">
 
 ## 2. 从仓库克隆到本地运行
 
@@ -77,8 +77,10 @@ Node 必须达到 22：锁定的 Selenium 依赖要求 Node 22，不能只看某
 
 ### 2.2 克隆并构建
 
+远程 `main` 目前包含已整合的 v0.3.4。以下克隆流程构建该远程版本；本轮 v0.4.0 的 `codex/heading-outline` 暂仅在本地仓库，当前工作区可直接构建该分支。需要立即使用 v0.4.0，请从上面的 Greasy Fork 公开页更新。
+
 ```bash
-git clone --branch fix/distant-navigation https://github.com/Jin-Yi-Liang/chatgpt_plugins.git
+git clone https://github.com/Jin-Yi-Liang/chatgpt_plugins.git
 cd chatgpt_plugins
 npm ci
 npm run build
@@ -88,7 +90,7 @@ npm run build
 
 1. `git clone` 获取源码，`cd` 进入包含 `package.json` 的项目根目录。
 2. `npm ci` 按 `package-lock.json` 安装固定版本依赖。
-3. `npm run build` 生成 Chrome、Firefox 扩展目录及独立油猴脚本。查看 `package.json` 确认拿到的源码版本；当前实现位于 `fix/distant-navigation` 分支。
+3. `npm run build` 生成 Chrome、Firefox 扩展目录及独立油猴脚本。查看 `package.json` 确认拿到的源码版本；当前实现位于 `codex/heading-outline` 分支。
 
 预期输出：
 
@@ -124,9 +126,9 @@ dist/
 2. 打开右上角“开发者模式”。
 3. 点击“加载已解压的扩展程序”。
 4. 选择本次构建的 **`chatgpt_plugins/dist/chrome` 目录**。
-5. 确认扩展名称为“对话导航 · ChatGPT”，版本为 `0.3.4`。
+5. 确认扩展名称为“对话导航 · ChatGPT”，版本与当前 `package.json` 一致（本地功能分支为 `0.4.0`，远程 main 为 `0.3.4`）。
 6. 打开或刷新 ChatGPT 标签页，进入一个已有会话。
-7. 页面右侧应出现导航面板，副标题为 `ChatGPT · v0.3.4`。
+7. 页面右侧应出现导航面板，副标题应匹配当前构建版本；本地功能分支为 `ChatGPT · v0.4.0`。
 
 ### Firefox
 
@@ -135,7 +137,7 @@ dist/
 3. 选择 **`chatgpt_plugins/dist/firefox/manifest.json`**。
 4. 如浏览器要求站点访问许可，允许访问 ChatGPT。
 5. 打开或刷新 ChatGPT 标签页，进入已有会话。
-6. 页面右侧应出现导航，副标题为 `ChatGPT · v0.3.4`。
+6. 页面右侧应出现导航，副标题应匹配当前构建版本；本地功能分支为 `ChatGPT · v0.4.0`。
 
 当前本地 Firefox 包尚未经过 Mozilla 签名。临时附加组件在浏览器重启后需要重新加载。长期安装 / 正式分发的签名方式参见 [Mozilla 签名与分发说明](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/)。
 
@@ -147,7 +149,7 @@ dist/
 2. 改写一个标题并保存，刷新后标题仍保留。
 3. 提问数量较多时，滚轮能浏览目录上方和下方。
 4. 删除一个导航项，原对话消息仍在，刷新后导航项仍删除。
-5. 让模型回复包含 Markdown `# 一级标题`，展开 `▸` 并点击子标题定位。
+5. 让模型回复包含 `# 一级标题`、`## 二级标题`、`### 三级标题`，逐级展开 `▸` 并点击标题文字定位。
 6. 勾选两条不相邻问题，复制到文本编辑器；下载 `.md` 并确认内容顺序一致。
 
 ## 4. 从发布包安装
@@ -159,13 +161,13 @@ dist/
 
 ### 油猴脚本（Chrome / Firefox）
 
-公开页已提供 v0.3.4，可直接安装 / 更新。也可按下面步骤从本地文件安装。
+公开页已提供 v0.4.0，可直接安装 / 更新。也可按下面步骤从本地文件安装。
 
 1. 从 [Tampermonkey 官网](https://www.tampermonkey.net/) 进入对应浏览器的官方商店并安装。
 2. Chrome 如提示用户脚本未获许可，在 Tampermonkey 扩展详情启用“允许用户脚本 / Allow User Scripts”。见 [官方 FAQ Q209](https://www.tampermonkey.net/faq.php?q=Q209)。
 3. 停用本项目原生扩展，避免两份脚本竞争同一个导航面板。
 4. 在 Tampermonkey 管理面板进入“实用工具 / Utilities”，选择“从文件导入 / Import from file”。
-5. 选择构建文件 `dist/userscript/chatgpt-conversation-navigator.user.js`，或发布文件 `conversation-navigator-0.3.4.user.js`；在安装确认页核对名称、版本和站点并点击安装。
+5. 选择构建文件 `dist/userscript/chatgpt-conversation-navigator.user.js`，或发布文件 `conversation-navigator-0.4.0.user.js`；在安装确认页核对名称、版本和站点并点击安装。
 6. 刷新 ChatGPT，进入已有会话，按第 3 节的手动验收检查。
 
 也可在 Tampermonkey 新建脚本编辑器中粘贴完整 `.user.js` 并保存。不要仅粘贴元信息，也不要导入扩展 ZIP。Greasy Fork 已发布，普通用户可直接从上述公开脚本页安装。
@@ -180,8 +182,8 @@ dist/
 | `✎` | 编辑自定义标题；“保存”或 `Ctrl/⌘ + Enter` 保存，`Esc` 取消 |
 | “恢复原提问” | 取消当前项目的自定义标题 |
 | `×` | 删除当前导航项，不删除对话；删除状态按会话保存 |
-| `▸` / `▾` | 展开 / 收起对应回复的 H1 标题；默认关闭 |
-| H1 子项 | 点击定位到回复标题，仅支持跳转 |
+| `▸` / `▾` | 逐层展开 / 收起回复标题，提问、H1、H2 的下拉框初始关闭 |
+| H1 / H2 / H3 子项 | 点击文字定位；H1/H2 后的箭头展开下一层，标题只读 |
 | 搜索框 / 清空按钮 | 匹配原始提问与自定义标题，显示匹配数；跨筛选选择会提示隐藏的已选回复 |
 | “当前提问” | 清空筛选，只滚动目录并聚焦当前项 |
 | “全选” | 选择整个目录中的问题，不含已删除项目 |
@@ -194,11 +196,11 @@ dist/
 
 页面快捷键：`Alt + Shift + N`。原生扩展提供工具栏按钮；油猴版在 Tampermonkey 菜单中提供“显示 / 收起对话导航”。
 
-定位时会提示等待、完成或失败。目标正文 / H1 尚在挂载时会在一次点击中继续等待；只有稳定对齐后才提示完成。定位最多等待 12 秒，超时会明确显示未完成；新点击或手动操作可接管。
+定位时会提示等待、完成或失败。目标正文 / 标题 尚在挂载时会在一次点击中继续等待；只有稳定对齐后才提示完成。定位最多等待 12 秒，超时会明确显示未完成；新点击或手动操作可接管。
 
 合并顺序始终按原会话顺序，与勾选顺序无关。同一问题对应多个已读取的模型回复时连续合并。默认仅输出回复正文，以 `---` 分隔；设置中开启“导出包含提问 / 自定义标题”后，给每份回复添加二级标题。
 
-如果所选问题暂无回复，或最后一份所选回复仍在生成，会提示等待或取消勾选。勾选状态和 H1 展开状态不永久保存，刷新 / 切换会话后重新设置。自定义标题、导航删除状态和界面偏好使用本地扩展存储或油猴的 GM 存储；不同安装之间不自动同步。
+如果所选问题暂无回复，或最后一份所选回复仍在生成，会提示等待或取消勾选。勾选状态和各级标题展开状态不永久保存，刷新 / 切换会话后重新设置。自定义标题、导航删除状态和界面偏好使用本地扩展存储或油猴的 GM 存储；不同安装之间不自动同步。
 
 ## 6. 开发和重新加载
 
@@ -285,9 +287,9 @@ npm run lint
 npm run package
 ```
 
-`npm test` 会先构建，再启动两个真实 headless 浏览器并安装扩展。当前完整测试每个浏览器 **40 组**；通过后 `artifacts/tests/report.json` 的顶层 `passed` 应为 `true`，命令退出码为 0。
+`npm test` 会先构建，再启动两个真实 headless 浏览器并安装扩展。当前完整测试每个浏览器 **44 组**；通过后 `artifacts/tests/report.json` 的顶层 `passed` 应为 `true`，命令退出码为 0。
 
-测试覆盖实际点击、单击即时与稳定后坐标、动态重排、窗口化目录、原生滚轮和键盘、标题 / 删除持久化、只读 H1 导航、剪贴板粘贴、文件下载、搜索、多选、会话切换、主题和窄屏。新增场景检查编辑草稿 / 光标保留、键盘焦点、跨筛选导出范围、100 / 200 条目录节点与滚动保留，以及“当前提问”仅滚动目录。
+测试覆盖实际点击、单击即时与稳定后坐标、动态重排、窗口化目录、原生滚轮和键盘、标题 / 删除持久化、只读三级标题导航、剪贴板粘贴、文件下载、搜索、多选、会话切换、主题和窄屏。新增场景检查编辑草稿 / 光标保留、键盘焦点、跨筛选导出范围、100 / 200 条目录节点与滚动保留，以及“当前提问”仅滚动目录。
 
 | 文件 | 用途 |
 | --- | --- |
@@ -297,8 +299,8 @@ npm run package
 | `artifacts/tests/*.png` | 运行截图；失败时可能包含诊断截图 |
 | [v0.2.0 验收记录](docs/verification-0.2.0.md) | 已提交到 Git 的历史验收说明 |
 | [v0.2.0 验收数据](docs/verification-0.2.0.json) | 已提交到 Git 的历史结果与哈希 |
-| [v0.3.4 验收记录](docs/verification-0.3.4.md) | 远距离整轮回收、反向滚动及节点复用，四种真实环境共 160 组 |
-| [v0.3.4 验收数据](docs/verification-0.3.4.json) | 旧版远跳失败、新版往返坐标、时间和交付哈希 |
+| [v0.4.0 验收记录](docs/verification-0.4.0.md) | 三级折叠目录与既有导航功能，四种真实环境共 176 组 |
+| [v0.4.0 验收数据](docs/verification-0.4.0.json) | 三级目录、逐级定位、窗口回收及交付哈希 |
 | [v0.3.2 验收记录](docs/verification-0.3.2.md) | 本轮跳转 / 启动修复，四种真实环境共 132 组 |
 | [v0.3.2 验收数据](docs/verification-0.3.2.json) | 旧版失败、新版坐标、帧延迟及交付哈希 |
 | [v0.3.1 验收记录](docs/verification-0.3.1.md) | 原生扩展及真实 Tampermonkey，共 124 组 |
@@ -323,7 +325,7 @@ npm run test:userscript
 npm run check:userscript
 ```
 
-第一条会构建、下载官方 Tampermonkey、在隔离配置中真实安装脚本管理器、通过管理面板导入 `.user.js`，然后执行 Chrome for Testing 和 Firefox 各 40 组。测试不会同时安装本项目原生扩展，也不会伪造 GM 函数。报告在 `artifacts/tests-userscript/report.json`，管理器来源及 SHA-256 在 `artifacts/tampermonkey/sources.json`。
+第一条会构建、下载官方 Tampermonkey、在隔离配置中真实安装脚本管理器、通过管理面板导入 `.user.js`，然后执行 Chrome for Testing 和 Firefox 各 44 组。测试不会同时安装本项目原生扩展，也不会伪造 GM 函数。报告在 `artifacts/tests-userscript/report.json`，管理器来源及 SHA-256 在 `artifacts/tampermonkey/sources.json`。
 
 Chrome 使用官方 CRX 解压后的实现，并恢复官方公钥以保留扩展 ID；Firefox 使用 AMO 官方签名 XPI。首次准备需要网络访问 Google 商店、Mozilla AMO 和 jsDelivr，下载失败时不得视为测试通过。已下载的包缓存在 `artifacts/tampermonkey/`；如要换用更新管理器，可移走该生成目录后重新准备。
 
@@ -342,15 +344,16 @@ Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文与生产
 | `TEST_EXTENSION_ROOT` | 测试另一份已构建目录，下面应有 `chrome/` 和 `firefox/` |
 | `TEST_ONLY_STARTUP=1` | 只调试新增长会话启动及窗口化重排回归 |
 | `TEST_ONLY_EXPERIENCE=1` | 只调试四组新增交互测试，不代表完整验收 |
+| `TEST_ONLY_HEADINGS=1` | 只调试 H1/H2/H3 分层展开、定位及回收回归 |
 | `TEST_ONLY_DISTANT=1` | 仅调试整轮回收、反向滚动与节点复用的远距离定位 |
 | `TEST_ONLY_NAVIGATION=1` | 仅调试新增导航相关测试，不代表完整验收 |
 | `TEST_RUNTIME=tampermonkey` | 直接运行 `node tests/run.mjs` 时切换到真实油猴；需先构建并准备管理器 |
 
 调试选项会减少测试范围，发布前应去掉限制并执行完整 `npm test` 与 `npm run test:userscript`。
 
-已验证 Chrome 从 v0.3.3 升级到 v0.3.4 后自定义标题和导航删除状态保留；Firefox 公开安装也已通过。需要复现升级时，可设置 `PUBLICATION_UPGRADE_FROM` 为旧版完整 `.user.js` 的本地路径，再运行公开安装测试。
+已验证 Chrome 从 v0.3.4 升级到 v0.4.0 后自定义标题和导航删除状态保留；Firefox 公开安装也已通过。需要复现升级时，可设置 `PUBLICATION_UPGRADE_FROM` 为旧版完整 `.user.js` 的本地路径，再运行公开安装测试。
 
-已发布版本的分发链路可用 `npm run test:published` 验证。配置在 `tests/published-release.json`；它从真实公开页点击安装，检查 Chrome / Firefox 的管理器版本，Chrome 另在受控 HTTPS 会话检查生产脚本注入和跳转。Firefox 此步骤只证明公开安装链路；本地完整功能由前述 40 组测试验证；公开安装测试的配置指向线上 v0.3.4。需要外网与相同的浏览器 / 驱动准备。
+已发布版本的分发链路可用 `npm run test:published` 验证。配置在 `tests/published-release.json`；它从真实公开页点击安装，检查 Chrome / Firefox 的管理器版本，Chrome 另在受控 HTTPS 会话检查生产脚本注入和跳转。Firefox 此步骤只证明公开安装链路；本地完整功能由前述 44 组测试验证；公开安装测试的配置指向线上 v0.4.0。需要外网与相同的浏览器 / 驱动准备。
 
 若已有 HTTP 代理，可仅为公开安装测试设置 `PUBLICATION_PROXY=http://127.0.0.1:7897`；该选项只配置隔离测试浏览器，不修改系统代理。公开页以 DOM 就绪为准，不等待全部广告资源加载。
 
@@ -364,7 +367,7 @@ Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文与生产
 | `npm run build` | 生成两份扩展和 `dist/userscript/*.user.js` |
 | `npm run build:userscript` | 只构建独立油猴脚本 |
 | `npm test` | 构建并执行浏览器集成测试 |
-| `npm run test:userscript` | 构建并在两个真实 Tampermonkey 环境执行 40+40 组 |
+| `npm run test:userscript` | 构建并在两个真实 Tampermonkey 环境执行 44+44 组 |
 | `npm run prepare:tampermonkey` | 下载 / 准备官方管理器供隔离测试使用 |
 | `npm run test:published` | 从 Greasy Fork 公开页在全新 Chrome / Firefox 配置安装并核对版本 |
 | `npm run test:performance` | 在真实 Chromium 对照 v0.3.0，测量 1,500 条目录计算并验证窗口顺序 |
@@ -384,9 +387,9 @@ npm run package
 当前版本输出：
 
 ```text
-artifacts/packages/conversation-navigator-chrome-0.3.4.zip
-artifacts/packages/conversation-navigator-firefox-0.3.4.zip
-artifacts/packages/conversation-navigator-0.3.4.user.js
+artifacts/packages/conversation-navigator-chrome-0.4.0.zip
+artifacts/packages/conversation-navigator-firefox-0.4.0.zip
+artifacts/packages/conversation-navigator-0.4.0.user.js
 ```
 
 Windows 如果没有 `zip`，可以先构建再用 PowerShell 压缩；注意压缩的是扩展目录的**内容**，ZIP 根目录应直接包含 `manifest.json`：
@@ -415,7 +418,7 @@ Copy-Item dist/userscript/chatgpt-conversation-navigator.user.js "artifacts/pack
 | 导航面板没有出现 | 检查加载目录、站点权限；重新载入扩展并刷新 ChatGPT 标签页 |
 | 目录为 0 条 | 确认会话正文已加载、面板版本正确；尝试兼容模式，仍失败时附浏览器版本及脱敏结构反馈 |
 | 首次整理目录时页面短暂空白 | 整理时短暂隐藏快速跳动的正文；完成后恢复，手动操作可中断 |
-| H1 展开按钮灰色 | 当前回复没有已识别的 H1；H2/H3 不会作为一级标题显示 |
+| 标题展开按钮灰色 | 当前回复没有已识别的 H1/H2/H3；缺少 H1 时 H2/H3 会在最近的有效层级列出 |
 | 刷新后被删的项目仍未出现 | 这是按会话保存的导航删除状态，不是原始消息被删除 |
 | 自己的 `.md` 找不到 | 检查浏览器下载记录和默认下载目录 |
 | ZIP 无法用油猴安装 | ZIP 是浏览器扩展包；导入 `dist/userscript/*.user.js` |
@@ -458,7 +461,7 @@ chatgpt_plugins/
 | `src/platforms.js` | 平台选择、消息识别、提问 / 回复配对、稳定键 |
 | `src/content.js` | 导航 UI、事件、标题与删除、选择和导出 |
 | `src/navigation.js` | 定位、反向滚动、重排校正及用户接管 |
-| `src/inventory.js` | 合并消息窗口、保留目录、H1 子项与位置提示 |
+| `src/inventory.js` | 合并消息窗口、保留目录、H1/H2/H3 层级与位置提示 |
 | `src/discovery.js` | 挂载未显示消息、整理目录、恢复视图 |
 | `src/markdown.js` | DOM 转 Markdown、代码 / 表格 / 公式规则 |
 | `src/storage.js` / `src/runtime/` | 扩展 / 油猴运行适配：存储、复制、下载和菜单 |
@@ -475,7 +478,7 @@ chatgpt_plugins/
 
 给愿意构建源码的人发送包含所需版本的 [仓库链接](https://github.com/Jin-Yi-Liang/chatgpt_plugins)，按第 2～4 节运行。给只希望安装的人提供构建好的版本 ZIP 或 `.user.js`。本地新分支需要先由作者上传，远程读者才能取得本版实现。
 
-GitHub 源码、浏览器扩展商店、油猴脚本是不同的分发形式。目前三种本地构建均可用；[Greasy Fork 已发布 v0.3.4](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)，Chrome / Firefox 原生扩展商店尚未上架。**账号安全准备、Greasy Fork 首次发布、版本更新和发布验证的详细步骤见 [油猴发布指南](docs/userscript-publishing.md)。** 公开页使用的介绍在 [发布介绍](docs/greasyfork-description.md)。
+GitHub 源码、浏览器扩展商店、油猴脚本是不同的分发形式。目前三种本地构建均可用；[Greasy Fork 已发布 v0.4.0](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)，Chrome / Firefox 原生扩展商店尚未上架。**账号安全准备、Greasy Fork 首次发布、版本更新和发布验证的详细步骤见 [油猴发布指南](docs/userscript-publishing.md)。** 公开页使用的介绍在 [发布介绍](docs/greasyfork-description.md)。
 
 反馈建议包含浏览器 / 扩展版本、复现步骤、会话长度和脱敏截图或结构信息。不要把聊天正文、登录凭据或访问令牌提交到公开 Issue。
 

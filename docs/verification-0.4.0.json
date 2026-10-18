@@ -1,0 +1,2690 @@
+{
+  "version": "0.4.0",
+  "date": "2026-10-18",
+  "branch": "codex/heading-outline",
+  "base": "bf78d3e941e5e49e7cf9acf5d87f019fe15ad594",
+  "implementationCommit": "15c932f962239fbfcde8c99a6747ca61b06dc5ae",
+  "integration": {
+    "strategy": "fast-forward",
+    "previousMain": "856316badfea9d015939e785dec589e246f8877b",
+    "main": "bf78d3e941e5e49e7cf9acf5d87f019fe15ad594",
+    "includedBranches": [
+      "feat/tampermonkey",
+      "perf/navigation-experience",
+      "fix/userscript-navigation",
+      "fix/navigation-completion",
+      "fix/distant-navigation"
+    ],
+    "mainPush": "existing SSH authorization; main synchronized before feature branch creation",
+    "featureDelivery": "Local commits and Greasy Fork; feature not merged back or pushed"
+  },
+  "native": {
+    "started": "2026-10-18T10:55:05.189Z",
+    "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "engine": "156.0.8078.4",
+        "extension": "dist/chrome manifest unchanged, --load-extension",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "工具栏弹出页渲染与内容脚本消息开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          },
+          {
+            "name": "延迟挂载：超过旧版超时仍持续等待，单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "移动占位：等待期间位置改变八万像素仍跟随当前目标",
+            "passed": true
+          },
+          {
+            "name": "标题分阶段挂载：H1 暂时消失后自动恢复定位",
+            "passed": true
+          },
+          {
+            "name": "页面暂时恢复滚动：校正期间不误报成功，解锁后单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：normal 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reverse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reuse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "分层标题：逐级默认收起、独立展开、只读和键盘操作",
+            "passed": true
+          },
+          {
+            "name": "分层标题：H1/H2/H3 单击定位且展开不会触发跳转",
+            "passed": true
+          },
+          {
+            "name": "分层标题：缺级、多回复、重复标题和动态结构更新",
+            "passed": true
+          },
+          {
+            "name": "分层标题：整轮回收后 H2/H3 跨区单击仍能定位",
+            "passed": true
+          }
+        ],
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.75,
+            "settledOffset": 23.75
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.125,
+            "settledOffset": 24.125
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24.25,
+            "settledOffset": 24.25
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.625,
+            "settledOffset": 23.625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 308
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 310
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.875,
+            "firstFrame": {
+              "duration": 12.599999994039536,
+              "offset": 23.875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.78125
+          },
+          {
+            "scenario": "slow",
+            "mounting": {
+              "kind": "slow",
+              "ready": true,
+              "elapsed": 3400.199999988079
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "moving",
+            "mounting": {
+              "kind": "moving",
+              "ready": true,
+              "elapsed": 1500
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "heading",
+            "mounting": {
+              "kind": "heading",
+              "ready": true,
+              "elapsed": 800.0999999940395
+            },
+            "finalOffset": 15.78125,
+            "clicks": 1
+          },
+          {
+            "scenario": "scroll-restoration",
+            "interruptions": 33,
+            "finalOffset": 24.25,
+            "clicks": 1
+          }
+        ],
+        "distantNavigation": [
+          {
+            "layout": "normal",
+            "target": 59,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1094,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 766820,
+            "mounted": [
+              "recycled-58",
+              "recycled-59",
+              "recycled-60",
+              "recycled-61"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 7,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1102,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 81620,
+            "mounted": [
+              "recycled-6",
+              "recycled-7",
+              "recycled-8",
+              "recycled-9"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 49,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1097,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 619120,
+            "mounted": [
+              "recycled-48",
+              "recycled-49",
+              "recycled-50",
+              "recycled-51"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 1,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1081,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 20,
+            "mounted": [
+              "recycled-1",
+              "recycled-2",
+              "recycled-3",
+              "recycled-4"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1100,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reverse",
+            "target": 6,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1099,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -781252,
+            "mounted": [
+              "recycled-4",
+              "recycled-5",
+              "recycled-6",
+              "recycled-7"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 58,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1099,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -89152,
+            "mounted": [
+              "recycled-56",
+              "recycled-57",
+              "recycled-58",
+              "recycled-59"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 14,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1088,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -681652,
+            "mounted": [
+              "recycled-12",
+              "recycled-13",
+              "recycled-14",
+              "recycled-15"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 64,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1103,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -41252,
+            "mounted": [
+              "recycled-61",
+              "recycled-62",
+              "recycled-63",
+              "recycled-64"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 17,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1099,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": -620360,
+            "mounted": [
+              "recycled-16",
+              "recycled-17",
+              "recycled-18",
+              "recycled-19"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reuse",
+            "target": 56,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1095,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 705720,
+            "mounted": [
+              "recycled-55",
+              "recycled-56",
+              "recycled-57",
+              "recycled-58"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 9,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1082,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 130820,
+            "mounted": [
+              "recycled-8",
+              "recycled-9",
+              "recycled-10",
+              "recycled-11"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 43,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1095,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 535320,
+            "mounted": [
+              "recycled-42",
+              "recycled-43",
+              "recycled-44",
+              "recycled-45"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1098,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          }
+        ],
+        "headingOutline": [
+          {
+            "title": "细节 A1.2",
+            "offset": 16.484375,
+            "elapsedMs": 1136
+          },
+          {
+            "title": "章节 A",
+            "offset": 16.078125,
+            "elapsedMs": 1116
+          },
+          {
+            "title": "小节 A1",
+            "offset": 15.8125,
+            "elapsedMs": 1116
+          },
+          {
+            "title": "细节 A1.1",
+            "offset": 16.234375,
+            "elapsedMs": 1116
+          }
+        ]
+      },
+      {
+        "browser": "firefox",
+        "engine": "157.0",
+        "extension": "dist/firefox content unchanged; test-only HTTP chatgpt.com match added, browser-local HTTP proxy returns synthetic fixture without contacting ChatGPT",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "工具栏弹出页渲染与内容脚本消息开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          },
+          {
+            "name": "延迟挂载：超过旧版超时仍持续等待，单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "移动占位：等待期间位置改变八万像素仍跟随当前目标",
+            "passed": true
+          },
+          {
+            "name": "标题分阶段挂载：H1 暂时消失后自动恢复定位",
+            "passed": true
+          },
+          {
+            "name": "页面暂时恢复滚动：校正期间不误报成功，解锁后单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：normal 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reverse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reuse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "分层标题：逐级默认收起、独立展开、只读和键盘操作",
+            "passed": true
+          },
+          {
+            "name": "分层标题：H1/H2/H3 单击定位且展开不会触发跳转",
+            "passed": true
+          },
+          {
+            "name": "分层标题：缺级、多回复、重复标题和动态结构更新",
+            "passed": true
+          },
+          {
+            "name": "分层标题：整轮回收后 H2/H3 跨区单击仍能定位",
+            "passed": true
+          }
+        ],
+        "addonId": "conversation-navigator@local.extension",
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.800003051757812,
+            "settledOffset": 23.800003051757812
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 316
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 316
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.866668701171875,
+            "firstFrame": {
+              "duration": 1,
+              "offset": 23.866668701171875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.816665649414062
+          },
+          {
+            "scenario": "slow",
+            "mounting": {
+              "kind": "slow",
+              "ready": true,
+              "elapsed": 3401
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "moving",
+            "mounting": {
+              "kind": "moving",
+              "ready": true,
+              "elapsed": 1500
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "heading",
+            "mounting": {
+              "kind": "heading",
+              "ready": true,
+              "elapsed": 801
+            },
+            "finalOffset": 15.816665649414062,
+            "clicks": 1
+          },
+          {
+            "scenario": "scroll-restoration",
+            "interruptions": 34,
+            "finalOffset": 24.399993896484375,
+            "clicks": 1
+          }
+        ],
+        "distantNavigation": [
+          {
+            "layout": "normal",
+            "target": 59,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1060,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 766820,
+            "mounted": [
+              "recycled-58",
+              "recycled-59",
+              "recycled-60",
+              "recycled-61"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 7,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1062,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 81620,
+            "mounted": [
+              "recycled-6",
+              "recycled-7",
+              "recycled-8",
+              "recycled-9"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 49,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1060,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 619120,
+            "mounted": [
+              "recycled-48",
+              "recycled-49",
+              "recycled-50",
+              "recycled-51"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 1,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1060,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 20,
+            "mounted": [
+              "recycled-1",
+              "recycled-2",
+              "recycled-3",
+              "recycled-4"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1063,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reverse",
+            "target": 6,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1068,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -781252,
+            "mounted": [
+              "recycled-4",
+              "recycled-5",
+              "recycled-6",
+              "recycled-7"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 58,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1063,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -89152,
+            "mounted": [
+              "recycled-56",
+              "recycled-57",
+              "recycled-58",
+              "recycled-59"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 14,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1059,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -681652,
+            "mounted": [
+              "recycled-12",
+              "recycled-13",
+              "recycled-14",
+              "recycled-15"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 64,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1050,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -41252,
+            "mounted": [
+              "recycled-61",
+              "recycled-62",
+              "recycled-63",
+              "recycled-64"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 17,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1057,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": -620360,
+            "mounted": [
+              "recycled-16",
+              "recycled-17",
+              "recycled-18",
+              "recycled-19"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reuse",
+            "target": 56,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1062,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 705720,
+            "mounted": [
+              "recycled-55",
+              "recycled-56",
+              "recycled-57",
+              "recycled-58"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 9,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1140,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 130820,
+            "mounted": [
+              "recycled-8",
+              "recycled-9",
+              "recycled-10",
+              "recycled-11"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 43,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1060,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 535320,
+            "mounted": [
+              "recycled-42",
+              "recycled-43",
+              "recycled-44",
+              "recycled-45"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1057,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          }
+        ],
+        "headingOutline": [
+          {
+            "title": "细节 A1.2",
+            "offset": 15.566665649414062,
+            "elapsedMs": 1170
+          },
+          {
+            "title": "章节 A",
+            "offset": 16.133331298828125,
+            "elapsedMs": 1165
+          },
+          {
+            "title": "小节 A1",
+            "offset": 15.883331298828125,
+            "elapsedMs": 1168
+          },
+          {
+            "title": "细节 A1.1",
+            "offset": 16.316665649414062,
+            "elapsedMs": 1167
+          }
+        ]
+      }
+    ],
+    "runtime": "WebExtension",
+    "finished": "2026-10-18T10:57:50.732Z",
+    "passed": true,
+    "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+    "bundleSHA256": {
+      "dist/chrome/content.js": "b3e05d1a0dfc83ab284fa334d3ef1c63f76e4248b1bafdc70684a5eed34074c2",
+      "dist/chrome/manifest.json": "a719646bfc4b3e8135b15bfae71381ed6d33fe0b1b371919980021f63ba0dbab",
+      "dist/firefox/content.js": "b3e05d1a0dfc83ab284fa334d3ef1c63f76e4248b1bafdc70684a5eed34074c2",
+      "dist/firefox/manifest.json": "0d034713824e8c407cb7625aae2ad17355e81a5b520b83868992899050e30a55"
+    }
+  },
+  "userscript": {
+    "started": "2026-10-18T10:59:41.768Z",
+    "scope": "Offline ChatGPT DOM fixtures, including user-supplied redacted current shell with synthetic content; real installed extensions and isolated headless browser profiles. Not a live signed-in ChatGPT conversation.",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "engine": "156.0.8078.4",
+        "extension": "Official Tampermonkey CRX unpacked with original ID; own WebExtension NOT loaded; production .user.js imported through manager UI",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "真实 Tampermonkey 菜单注册与导航开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          },
+          {
+            "name": "延迟挂载：超过旧版超时仍持续等待，单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "移动占位：等待期间位置改变八万像素仍跟随当前目标",
+            "passed": true
+          },
+          {
+            "name": "标题分阶段挂载：H1 暂时消失后自动恢复定位",
+            "passed": true
+          },
+          {
+            "name": "页面暂时恢复滚动：校正期间不误报成功，解锁后单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：normal 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reverse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reuse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "分层标题：逐级默认收起、独立展开、只读和键盘操作",
+            "passed": true
+          },
+          {
+            "name": "分层标题：H1/H2/H3 单击定位且展开不会触发跳转",
+            "passed": true
+          },
+          {
+            "name": "分层标题：缺级、多回复、重复标题和动态结构更新",
+            "passed": true
+          },
+          {
+            "name": "分层标题：整轮回收后 H2/H3 跨区单击仍能定位",
+            "passed": true
+          }
+        ],
+        "manager": {
+          "url": "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=156.0.8078.4&acceptformat=crx2,crx3&x=id%3Ddhdgffkkebhmkfjojejmpbldmpobfkfo%26uc",
+          "version": "5.5.1",
+          "sha256": "b5167937817e636adeba462ed9bf9b32ff01c2888f78a9afc6aa4f8e655fe872",
+          "installation": "Official CRX unpacked with its signed-header public key; implementation files unchanged"
+        },
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.75,
+            "settledOffset": 23.75
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.125,
+            "settledOffset": 24.125
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 23.5,
+            "settledOffset": 23.5
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24.25,
+            "settledOffset": 24.25
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.625,
+            "settledOffset": 23.625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.375,
+            "settledOffset": 24.375
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.875,
+            "settledOffset": 23.875
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 310
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 311
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.875,
+            "firstFrame": {
+              "duration": 14.299999982118607,
+              "offset": 23.875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.78125
+          },
+          {
+            "scenario": "slow",
+            "mounting": {
+              "kind": "slow",
+              "ready": true,
+              "elapsed": 3400.0999999940395
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "moving",
+            "mounting": {
+              "kind": "moving",
+              "ready": true,
+              "elapsed": 1500.2999999821186
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "heading",
+            "mounting": {
+              "kind": "heading",
+              "ready": true,
+              "elapsed": 800.2000000178814
+            },
+            "finalOffset": 15.78125,
+            "clicks": 1
+          },
+          {
+            "scenario": "scroll-restoration",
+            "interruptions": 32,
+            "finalOffset": 24.25,
+            "clicks": 1
+          }
+        ],
+        "distantNavigation": [
+          {
+            "layout": "normal",
+            "target": 59,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1106,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 766820,
+            "mounted": [
+              "recycled-58",
+              "recycled-59",
+              "recycled-60",
+              "recycled-61"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 7,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1093,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 81620,
+            "mounted": [
+              "recycled-6",
+              "recycled-7",
+              "recycled-8",
+              "recycled-9"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 49,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1095,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 619120,
+            "mounted": [
+              "recycled-48",
+              "recycled-49",
+              "recycled-50",
+              "recycled-51"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 1,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1095,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 20,
+            "mounted": [
+              "recycled-1",
+              "recycled-2",
+              "recycled-3",
+              "recycled-4"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1102,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reverse",
+            "target": 6,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1103,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -781252,
+            "mounted": [
+              "recycled-4",
+              "recycled-5",
+              "recycled-6",
+              "recycled-7"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 58,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1106,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -89152,
+            "mounted": [
+              "recycled-56",
+              "recycled-57",
+              "recycled-58",
+              "recycled-59"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 14,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1077,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -681652,
+            "mounted": [
+              "recycled-12",
+              "recycled-13",
+              "recycled-14",
+              "recycled-15"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 64,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1099,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -41252,
+            "mounted": [
+              "recycled-61",
+              "recycled-62",
+              "recycled-63",
+              "recycled-64"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 17,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1097,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": -620360,
+            "mounted": [
+              "recycled-16",
+              "recycled-17",
+              "recycled-18",
+              "recycled-19"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reuse",
+            "target": 56,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1098,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 705720,
+            "mounted": [
+              "recycled-55",
+              "recycled-56",
+              "recycled-57",
+              "recycled-58"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 9,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1072,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 130820,
+            "mounted": [
+              "recycled-8",
+              "recycled-9",
+              "recycled-10",
+              "recycled-11"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 43,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1106,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 535320,
+            "mounted": [
+              "recycled-42",
+              "recycled-43",
+              "recycled-44",
+              "recycled-45"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1104,
+            "visibility": "visible",
+            "offset": 24.234375,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          }
+        ],
+        "headingOutline": [
+          {
+            "title": "细节 A1.2",
+            "offset": 16.484375,
+            "elapsedMs": 1139
+          },
+          {
+            "title": "章节 A",
+            "offset": 16.078125,
+            "elapsedMs": 1116
+          },
+          {
+            "title": "小节 A1",
+            "offset": 15.8125,
+            "elapsedMs": 1135
+          },
+          {
+            "title": "细节 A1.1",
+            "offset": 16.234375,
+            "elapsedMs": 1131
+          }
+        ]
+      },
+      {
+        "browser": "firefox",
+        "engine": "157.0",
+        "extension": "Official signed Tampermonkey XPI; own WebExtension NOT installed; UI-imported userscript with test-only HTTP ChatGPT match",
+        "tests": [
+          {
+            "name": "真实扩展注入、导航提问与隐藏分支过滤",
+            "passed": true
+          },
+          {
+            "name": "点击导航滚动到对应提问",
+            "passed": true
+          },
+          {
+            "name": "自定义标题、安全显示与刷新持久化",
+            "passed": true
+          },
+          {
+            "name": "搜索原提问与自定义标题、选择搜索结果",
+            "passed": true
+          },
+          {
+            "name": "多选回复复制到真实剪贴板、连续 Markdown 与格式",
+            "passed": true
+          },
+          {
+            "name": "下载 .md 文件与复制内容逐字一致",
+            "passed": true
+          },
+          {
+            "name": "可选导出标题、恢复标题、空标题与取消编辑",
+            "passed": true
+          },
+          {
+            "name": "动态追加提问、暂无回复与生成中禁止残缺导出",
+            "passed": true
+          },
+          {
+            "name": "收起、展开、刷新保留偏好与窄屏",
+            "passed": true
+          },
+          {
+            "name": "SPA 会话切换与标题按会话隔离、前进后退恢复",
+            "passed": true
+          },
+          {
+            "name": "深色主题、自定义标题重置与全选清空",
+            "passed": true
+          },
+          {
+            "name": "无消息 ID 的兼容模式、重复问题稳定区分",
+            "passed": true
+          },
+          {
+            "name": "新对话从草稿地址迁移为正式会话时保留标题",
+            "passed": true
+          },
+          {
+            "name": "用户提供的新版 DOM：没有旧角色与 article 仍识别提问",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：重复提问独立改名并刷新保留",
+            "passed": true
+          },
+          {
+            "name": "新版 DOM：复制与下载只包含回复正文且保留四级标题",
+            "passed": true
+          },
+          {
+            "name": "兼容轮次 display:contents 与 main 外结构",
+            "passed": true
+          },
+          {
+            "name": "真实 Tampermonkey 菜单注册与导航开关",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：DOM 同键重建后仍定位当前节点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：正向和反向长列表逐项定位无需补点",
+            "passed": true
+          },
+          {
+            "name": "单击跳转：延迟重排与节点替换后自动校正",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：自动发现所有提问并恢复原滚动位置",
+            "passed": true
+          },
+          {
+            "name": "窗口化会话：未渲染项目单击定位且目录不丢项",
+            "passed": true
+          },
+          {
+            "name": "导航真实滚轮：上下滚动和边界不带动会话页面",
+            "passed": true
+          },
+          {
+            "name": "回复 H1 子导航：默认关闭、只读、定位和收起",
+            "passed": true
+          },
+          {
+            "name": "删除导航：不删原始消息、不被重新发现、刷新保留",
+            "passed": true
+          },
+          {
+            "name": "定位过程中用户手动滚动可接管控制",
+            "passed": true
+          },
+          {
+            "name": "交互优化：动态回复保留标题草稿、DOM、光标与组合输入边界",
+            "passed": true
+          },
+          {
+            "name": "交互优化：键盘展开、编辑、删除与面板收放保持合理焦点",
+            "passed": true
+          },
+          {
+            "name": "交互优化：搜索范围、跨筛选选区、清空搜索与全部删除反馈",
+            "passed": true
+          },
+          {
+            "name": "交互优化：100/200 条目录更新保留节点、滚动和勾选，定位当前只滚动目录",
+            "passed": true
+          },
+          {
+            "name": "长会话启动：完整内容的虚拟样式标记不触发全页扫描，首次单击立即定位",
+            "passed": true
+          },
+          {
+            "name": "窗口化重排：历史位置过期后，单击提问和 H1 仍定位当前占位节点",
+            "passed": true
+          },
+          {
+            "name": "延迟挂载：超过旧版超时仍持续等待，单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "移动占位：等待期间位置改变八万像素仍跟随当前目标",
+            "passed": true
+          },
+          {
+            "name": "标题分阶段挂载：H1 暂时消失后自动恢复定位",
+            "passed": true
+          },
+          {
+            "name": "页面暂时恢复滚动：校正期间不误报成功，解锁后单击到达目标",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：normal 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reverse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "整轮回收远跳：reuse 相邻、跨区、H1 与当前节点身份",
+            "passed": true
+          },
+          {
+            "name": "分层标题：逐级默认收起、独立展开、只读和键盘操作",
+            "passed": true
+          },
+          {
+            "name": "分层标题：H1/H2/H3 单击定位且展开不会触发跳转",
+            "passed": true
+          },
+          {
+            "name": "分层标题：缺级、多回复、重复标题和动态结构更新",
+            "passed": true
+          },
+          {
+            "name": "分层标题：整轮回收后 H2/H3 跨区单击仍能定位",
+            "passed": true
+          }
+        ],
+        "manager": {
+          "url": "https://addons.mozilla.org/firefox/downloads/file/4797143/tampermonkey-5.5.0.xpi",
+          "version": "5.5.0",
+          "sha256": "190031c78dbc5696114835601f2c8e6b855ad1e134df5df278f8fc158c065908",
+          "installation": "Official signed AMO XPI"
+        },
+        "addonId": "firefox@tampermonkey.net",
+        "navigationSamples": [
+          {
+            "layout": "normal",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "normal",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 23.800003051757812,
+            "settledOffset": 23.800003051757812
+          },
+          {
+            "layout": "normal",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "normal",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "normal",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 1,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 9,
+            "clicks": 1,
+            "immediateOffset": 24.399993896484375,
+            "settledOffset": 24.399993896484375
+          },
+          {
+            "layout": "reverse",
+            "index": 3,
+            "clicks": 1,
+            "immediateOffset": 24,
+            "settledOffset": 24
+          },
+          {
+            "layout": "reverse",
+            "index": 12,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          },
+          {
+            "layout": "reverse",
+            "index": 6,
+            "clicks": 1,
+            "immediateOffset": 24.199996948242188,
+            "settledOffset": 24.199996948242188
+          },
+          {
+            "layout": "reverse",
+            "index": 2,
+            "clicks": 1,
+            "immediateOffset": 23.600006103515625,
+            "settledOffset": 23.600006103515625
+          }
+        ],
+        "experienceSamples": [
+          {
+            "scenario": "streaming-draft",
+            "sameTextarea": true,
+            "selection": [
+              3,
+              11,
+              "backward"
+            ],
+            "compositionCoverage": "Synthetic isComposing KeyboardEvent boundary; no native input-method claim"
+          },
+          {
+            "scenario": "long-inventory-update",
+            "samples": [
+              {
+                "rows": 100,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 317
+              },
+              {
+                "rows": 200,
+                "retainedRows": 100,
+                "beforeScroll": 550,
+                "afterScroll": 550,
+                "selected": [
+                  "id:scroll-20",
+                  "id:scroll-80"
+                ],
+                "elapsedMs": 315
+              }
+            ],
+            "timing": "Observed browser timings only; no fixed performance threshold"
+          }
+        ],
+        "startupNavigation": [
+          {
+            "scenario": "preloaded-260000px",
+            "initialDiscovery": "idle",
+            "firstClickOffset": 23.866668701171875,
+            "firstFrame": {
+              "duration": 0,
+              "offset": 23.866668701171875
+            }
+          },
+          {
+            "scenario": "virtual-reflow-240000px",
+            "questionOffset": 16,
+            "headingOffset": 15.816665649414062
+          },
+          {
+            "scenario": "slow",
+            "mounting": {
+              "kind": "slow",
+              "ready": true,
+              "elapsed": 3401
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "moving",
+            "mounting": {
+              "kind": "moving",
+              "ready": true,
+              "elapsed": 1511
+            },
+            "finalOffset": 16,
+            "clicks": 1
+          },
+          {
+            "scenario": "heading",
+            "mounting": {
+              "kind": "heading",
+              "ready": true,
+              "elapsed": 799
+            },
+            "finalOffset": 15.816665649414062,
+            "clicks": 1
+          },
+          {
+            "scenario": "scroll-restoration",
+            "interruptions": 35,
+            "finalOffset": 24.399993896484375,
+            "clicks": 1
+          }
+        ],
+        "distantNavigation": [
+          {
+            "layout": "normal",
+            "target": 59,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1149,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 766820,
+            "mounted": [
+              "recycled-58",
+              "recycled-59",
+              "recycled-60",
+              "recycled-61"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 7,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1068,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 81620,
+            "mounted": [
+              "recycled-6",
+              "recycled-7",
+              "recycled-8",
+              "recycled-9"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 49,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1065,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 619120,
+            "mounted": [
+              "recycled-48",
+              "recycled-49",
+              "recycled-50",
+              "recycled-51"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 1,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1055,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 20,
+            "mounted": [
+              "recycled-1",
+              "recycled-2",
+              "recycled-3",
+              "recycled-4"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "normal",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1065,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reverse",
+            "target": 6,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1066,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -781252,
+            "mounted": [
+              "recycled-4",
+              "recycled-5",
+              "recycled-6",
+              "recycled-7"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 58,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1060,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -89152,
+            "mounted": [
+              "recycled-56",
+              "recycled-57",
+              "recycled-58",
+              "recycled-59"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 14,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1056,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -681652,
+            "mounted": [
+              "recycled-12",
+              "recycled-13",
+              "recycled-14",
+              "recycled-15"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 64,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1058,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": -41252,
+            "mounted": [
+              "recycled-61",
+              "recycled-62",
+              "recycled-63",
+              "recycled-64"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reverse",
+            "target": 17,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1067,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": -620360,
+            "mounted": [
+              "recycled-16",
+              "recycled-17",
+              "recycled-18",
+              "recycled-19"
+            ],
+            "status": "已定位到回复标题。"
+          },
+          {
+            "layout": "reuse",
+            "target": 56,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1053,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 705720,
+            "mounted": [
+              "recycled-55",
+              "recycled-56",
+              "recycled-57",
+              "recycled-58"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 9,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1059,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 130820,
+            "mounted": [
+              "recycled-8",
+              "recycled-9",
+              "recycled-10",
+              "recycled-11"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 43,
+            "heading": false,
+            "reached": true,
+            "elapsedMs": 1053,
+            "visibility": "visible",
+            "offset": 24,
+            "scrollTop": 535320,
+            "mounted": [
+              "recycled-42",
+              "recycled-43",
+              "recycled-44",
+              "recycled-45"
+            ],
+            "status": "已定位到提问。"
+          },
+          {
+            "layout": "reuse",
+            "target": 47,
+            "heading": true,
+            "reached": true,
+            "elapsedMs": 1057,
+            "visibility": "visible",
+            "offset": 24.25,
+            "scrollTop": 603812,
+            "mounted": [
+              "recycled-46",
+              "recycled-47",
+              "recycled-48",
+              "recycled-49"
+            ],
+            "status": "已定位到回复标题。"
+          }
+        ],
+        "headingOutline": [
+          {
+            "title": "细节 A1.2",
+            "offset": 15.566665649414062,
+            "elapsedMs": 1167
+          },
+          {
+            "title": "章节 A",
+            "offset": 16.133331298828125,
+            "elapsedMs": 1165
+          },
+          {
+            "title": "小节 A1",
+            "offset": 15.883331298828125,
+            "elapsedMs": 1166
+          },
+          {
+            "title": "细节 A1.1",
+            "offset": 16.316665649414062,
+            "elapsedMs": 1166
+          }
+        ]
+      }
+    ],
+    "runtime": "Real Tampermonkey with UI-installed userscript, GM API calls and fixed-version @require libraries",
+    "finished": "2026-10-18T11:03:46.349Z",
+    "passed": true,
+    "extensionRoot": "/home/michael/workspace/project/chatgpt_plugins/dist",
+    "bundleSHA256": {
+      "dist/chrome/content.js": "b3e05d1a0dfc83ab284fa334d3ef1c63f76e4248b1bafdc70684a5eed34074c2",
+      "dist/chrome/manifest.json": "a719646bfc4b3e8135b15bfae71381ed6d33fe0b1b371919980021f63ba0dbab",
+      "dist/firefox/content.js": "b3e05d1a0dfc83ab284fa334d3ef1c63f76e4248b1bafdc70684a5eed34074c2",
+      "dist/firefox/manifest.json": "0d034713824e8c407cb7625aae2ad17355e81a5b520b83868992899050e30a55"
+    },
+    "userscriptSHA256": "be48ef1af88754c326376d69287739d26c14366badfe57b1370109cf21d4bbcd"
+  },
+  "performance": {
+    "browser": "156.0.8078.4",
+    "recorded": "2026-10-18T10:55:07.644Z",
+    "baseline": "b20bc04",
+    "scope": "Real Chromium, fixed rendered 1500-turn DOM, direct inventory module; excludes collection/UI rendering.",
+    "sourceSHA256": {
+      "baseline": "f75c11c4a9973bf2792887c704d7ac15fc7648581994dd36927a7c9882827e17",
+      "candidate": "ee219dfa4f36ba90340f6db71858c0ea009fa8d54be164141ca9e7e65f1c50df"
+    },
+    "samples": [
+      {
+        "label": "baseline",
+        "initialMilliseconds": 72.69999998807907,
+        "streaming100Milliseconds": 60.20000001788139,
+        "resolve100Milliseconds": 88.40000000596046,
+        "unchangedMerge10SortCalls": 15000,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "candidate",
+        "initialMilliseconds": 43.10000002384186,
+        "streaming100Milliseconds": 52.20000001788139,
+        "resolve100Milliseconds": 0.3999999761581421,
+        "unchangedMerge10SortCalls": 0,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "candidate",
+        "initialMilliseconds": 40.400000005960464,
+        "streaming100Milliseconds": 35.30000001192093,
+        "resolve100Milliseconds": 0.4000000059604645,
+        "unchangedMerge10SortCalls": 0,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      },
+      {
+        "label": "baseline",
+        "initialMilliseconds": 55.70000001788139,
+        "streaming100Milliseconds": 56.400000005960464,
+        "resolve100Milliseconds": 79.09999999403954,
+        "unchangedMerge10SortCalls": 15000,
+        "count": 1500,
+        "keys": [
+          "q0",
+          "q1499"
+        ]
+      }
+    ],
+    "correctness": {
+      "passed": true,
+      "windows": 126,
+      "tested": [
+        "overlapping/disconnected windows",
+        "complete ordering",
+        "same-key node replacement",
+        "streamed H1 and duplicate H1 keys",
+        "unmounted directions",
+        "empty window",
+        "duplicate keys and graph cycles"
+      ]
+    }
+  },
+  "packages": {
+    "conversation-navigator-0.4.0.user.js": {
+      "bytes": 69961,
+      "sha256": "be48ef1af88754c326376d69287739d26c14366badfe57b1370109cf21d4bbcd"
+    },
+    "conversation-navigator-chrome-0.4.0.zip": {
+      "bytes": 28447,
+      "sha256": "d46bef91e7db9a57e56c47e276307230c0269fd021c6a21ca34ec52fb05bc82f"
+    },
+    "conversation-navigator-firefox-0.4.0.zip": {
+      "bytes": 28564,
+      "sha256": "2b07e64c7b6ab24a4fde8d6954e2b9dd81d2a4de6d664336409eac8532ba28ad"
+    }
+  },
+  "publication": {
+    "code": {
+      "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+      "version": "0.4.0",
+      "localSHA256": "be48ef1af88754c326376d69287739d26c14366badfe57b1370109cf21d4bbcd",
+      "publicSHA256": "65d909ca0e7bbc51bb00142e88aad51faabd70ccce45373bda27d4795be2d810",
+      "bodySHA256": "2eef285dc97c0f808d166bec34270b62e972eff43e46317d24e3e6fda47b19b2",
+      "exactMatchWithoutPlatformURLs": true,
+      "localBytes": 69961,
+      "publicBytes": 70209
+    },
+    "installation": {
+      "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+      "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "version": "0.4.0",
+      "browsers": [
+        {
+          "browser": "chromium",
+          "engine": "156.0.8078.4",
+          "publicInstall": true,
+          "dashboardVersion": "0.4.0",
+          "productionHTTPSFixture": "Actual question and nested H3 navigation clicks passed",
+          "nestedHeadings": true,
+          "upgrade": {
+            "from": "0.3.4",
+            "to": "0.4.0",
+            "customTitlePreserved": true,
+            "deletionPreserved": true
+          }
+        },
+        {
+          "browser": "firefox",
+          "engine": "157.0",
+          "publicInstall": true,
+          "dashboardVersion": "0.4.0",
+          "scope": "Public page -> actual Tampermonkey install -> installed dashboard; no signed-in ChatGPT claim"
+        }
+      ],
+      "passed": true
+    },
+    "proof": "docs/images/greasyfork-0.4.0.jpg"
+  }
+}
