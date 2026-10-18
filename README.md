@@ -7,7 +7,7 @@
 - 运行网站：`https://chatgpt.com/*`、旧域名 `https://chat.openai.com/*`。
 - DeepSeek、Claude：已预留适配接口，尚未启用。
 - 油猴 / Tampermonkey：已实现完整 `.user.js`，Chrome 和 Firefox 的真实脚本管理器均通过验收。安装与发布步骤见 [油猴发布指南](docs/userscript-publishing.md)。
-- **直接安装 / 更新：[Greasy Fork 公开脚本页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)**，当前公开版本为 **v0.4.0**。本地 **v0.5.0** 已通过188组测试，待恢复登录后发布；可先按下文从本地油猴文件安装。
+- **直接安装 / 更新：[Greasy Fork 公开脚本页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)**，当前公开版本为 **v0.5.0**。已有用户可检查更新，确认后刷新 ChatGPT；本地文件安装方法见下文。
 - 本轮分支：`codex/formula-copy`，基于 v0.4.0 本地提交 `9d5b730`。新增双击模型公式复制到剪贴板，按要求提交本地与 Greasy Fork。本地功能分支与远程 main 分开交付。
 - 项目使用 MIT 许可，见 [LICENSE](LICENSE)。
 
@@ -78,7 +78,7 @@ Node 必须达到 22：锁定的 Selenium 依赖要求 Node 22，不能只看某
 
 ### 2.2 克隆并构建
 
-远程 `main` 目前包含已整合的 v0.3.4。以下克隆流程构建该远程版本；本轮 v0.5.0 的 `codex/formula-copy` 暂仅在本地仓库，当前工作区可直接构建该分支。需要立即使用 v0.5.0，可按下文本地文件安装步骤导入已验收的 `.user.js`；公开更新待恢复登录后发布。
+远程 `main` 目前包含已整合的 v0.3.4。以下克隆流程构建该远程版本；本轮 v0.5.0 的 `codex/formula-copy` 暂仅在本地仓库，当前工作区可直接构建该分支。需要立即使用 v0.5.0，可从 Greasy Fork 公开页更新，或按下文本地文件安装步骤导入已验收的 `.user.js`。
 
 ```bash
 git clone https://github.com/Jin-Yi-Liang/chatgpt_plugins.git
@@ -162,7 +162,7 @@ dist/
 
 ### 油猴脚本（Chrome / Firefox）
 
-公开页当前为 v0.4.0；v0.5.0 已构建和验收，待登录发布。现在可按下面步骤从本地 v0.5.0 文件安装。
+公开页已提供 v0.5.0，可直接安装 / 更新，也可按下面步骤从本地文件安装。
 
 1. 从 [Tampermonkey 官网](https://www.tampermonkey.net/) 进入对应浏览器的官方商店并安装。
 2. Chrome 如提示用户脚本未获许可，在 Tampermonkey 扩展详情启用“允许用户脚本 / Allow User Scripts”。见 [官方 FAQ Q209](https://www.tampermonkey.net/faq.php?q=Q209)。
@@ -362,9 +362,9 @@ Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文与生产
 
 调试选项会减少测试范围，发布前应去掉限制并执行完整 `npm test` 与 `npm run test:userscript`。
 
-v0.5.0 的公开升级尚待登录发布后执行；已准备核验自定义标题、删除状态、H3导航及公式双击后的实际 Ctrl+V。需要复现升级时，可设置 `PUBLICATION_UPGRADE_FROM` 为旧版完整 `.user.js` 的本地路径，再运行公开安装测试。
+已验证 Chrome 从 v0.4.0 公开升级至 v0.5.0，保留自定义标题和删除状态，H3导航及公式双击后的实际 Ctrl+V通过；Firefox公开安装和版本核验通过。需要复现升级时，可设置 `PUBLICATION_UPGRADE_FROM` 为旧版完整 `.user.js` 的本地路径，再运行公开安装测试。
 
-已发布版本的分发链路可用 `npm run test:published` 验证。配置在 `tests/published-release.json`；它从真实公开页点击安装，检查 Chrome / Firefox 的管理器版本，Chrome 另在受控 HTTPS 会话检查生产脚本注入和跳转。Firefox 此步骤只证明公开安装链路；本地完整功能由前述 47 组测试验证；公开安装测试的配置仍指向线上 v0.4.0；发布后更新配置为 v0.5.0 再验收。需要外网与相同的浏览器 / 驱动准备。
+已发布版本的分发链路可用 `npm run test:published` 验证。配置在 `tests/published-release.json`；它从真实公开页点击安装，检查 Chrome / Firefox 的管理器版本，Chrome 另在受控 HTTPS 会话检查生产脚本注入和跳转。Firefox 此步骤只证明公开安装链路；本地完整功能由前述 47 组测试验证；公开安装测试的配置指向已发布的 v0.5.0。需要外网与相同的浏览器 / 驱动准备。
 
 若已有 HTTP 代理，可仅为公开安装测试设置 `PUBLICATION_PROXY=http://127.0.0.1:7897`；该选项只配置隔离测试浏览器，不修改系统代理。公开页以 DOM 就绪为准，不等待全部广告资源加载。
 
@@ -490,7 +490,7 @@ chatgpt_plugins/
 
 给愿意构建源码的人发送包含所需版本的 [仓库链接](https://github.com/Jin-Yi-Liang/chatgpt_plugins)，按第 2～4 节运行。给只希望安装的人提供构建好的版本 ZIP 或 `.user.js`。本地新分支需要先由作者上传，远程读者才能取得本版实现。
 
-GitHub 源码、浏览器扩展商店、油猴脚本是不同的分发形式。目前三种本地构建均可用；[Greasy Fork 当前公开 v0.4.0，v0.5.0 待发布](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)，Chrome / Firefox 原生扩展商店尚未上架。**账号安全准备、Greasy Fork 首次发布、版本更新和发布验证的详细步骤见 [油猴发布指南](docs/userscript-publishing.md)。** 公开页使用的介绍在 [发布介绍](docs/greasyfork-description.md)。
+GitHub 源码、浏览器扩展商店、油猴脚本是不同的分发形式。目前三种本地构建均可用；[Greasy Fork 已发布 v0.5.0](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)，Chrome / Firefox 原生扩展商店尚未上架。**账号安全准备、Greasy Fork 首次发布、版本更新和发布验证的详细步骤见 [油猴发布指南](docs/userscript-publishing.md)。** 公开页使用的介绍在 [发布介绍](docs/greasyfork-description.md)。
 
 反馈建议包含浏览器 / 扩展版本、复现步骤、会话长度和脱敏截图或结构信息。不要把聊天正文、登录凭据或访问令牌提交到公开 Issue。
 

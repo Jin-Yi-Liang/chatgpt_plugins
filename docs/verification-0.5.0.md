@@ -43,7 +43,7 @@ TEST_RUNTIME=tampermonkey TEST_ONLY_FORMULAS=1 node tests/run.mjs
 
 调试命令不能代替完整回归。公开安装验收会从原 Greasy Fork 条目升级旧版本，确认保存状态和三级目录，并双击公开脚本中的公式，再实际 Ctrl+V 核对 `E=mc^2`。完整报告、最终产物哈希和公开安装结果见 [JSON 记录](verification-0.5.0.json)。
 
-## 已完成结果与待发布事项
+## 实际结果与公开发布
 
 | 运行形式 | Chrome for Testing 156.0.8078.4 | Firefox 157.0 |
 | --- | --- | --- |
@@ -54,15 +54,22 @@ TEST_RUNTIME=tampermonkey TEST_ONLY_FORMULAS=1 node tests/run.mjs
 
 实现已提交本地 Git：`c3edbfe`。油猴包74,711字节，SHA-256 `71dd4c35f5a256541c7242b11bcab8c4be72c1d5552afbfd38c92533cb3c30c7`。发布包与实际测试文件哈希一致。
 
-**Greasy Fork尚未更新到0.5.0，公开版本仍为0.4.0。** 原先已登录的Chrome当前未连接；可用的内置浏览器未登录，已停在登录页并请求用户恢复会话。未读取或导出浏览器凭据，没有尝试绕过登录。尚未执行0.5.0公开升级测试，也未声称线上哈希一致。
+**v0.5.0 已于2026-10-18发布到原 Greasy Fork 条目600317。** 用户恢复登录后，通过内置浏览器完成更新，名称、namespace和安装URL保持不变。
 
-恢复会话后的操作：
+- 公开文件74,959字节，SHA-256 `4e0327e46284dcbaae3230f211b088781c4d2ea5847fb728069ad9207b64756b`。去掉平台补入的下载/更新URL两行后，与已验收本地文件逐字一致。
+- Chrome从公开页实际升级0.4.0→0.5.0，自定义标题和删除状态保留，三级目录及H3定位正常。实际双击模型公式，随后在文本框原生Ctrl+V，内容逐字为 `E=mc^2`。
+- Firefox从公开页安装，官方Tampermonkey管理器确认版本0.5.0。Firefox完整功能由前述47组本地真实油猴回归覆盖；未操作用户私人Firefox会话。
+- 公开分发测试使用已有HTTP代理，仅为隔离测试配置，不修改系统代理、DNS或用户浏览器安全设置。
 
-1. 在原条目600317点击“更新”，填入 `artifacts/packages/conversation-navigator-0.5.0.user.js` 的完整内容。
-2. 附加信息选Markdown，填入 `docs/greasyfork-description.md`。更新日志说明双击公式、两种格式、动态公式、Ctrl+V实测及188组回归。
-3. 发布后核对公开版本0.5.0，下载并比较生产代码；仅允许平台补入下载与更新地址。
-4. 将 `tests/published-release.json` 改为真实公开0.5.0，使用 `PUBLICATION_UPGRADE_FROM=artifacts/packages/conversation-navigator-0.4.0.user.js` 执行公开安装测试。必要时只为隔离测试浏览器设置已有HTTP代理 `PUBLICATION_PROXY`。
-5. 验证公开升级后保存状态、三级目录，以及公式双击后的实际 Ctrl+V；更新本记录及JSON中的待发布状态，再提交发布证据。
+原始结果位于 `artifacts/publication-0.5.0/install-report.json` 和 `code-verification.json`，可复核副本保存在本页对应JSON中。复现公开升级时使用：
+
+```bash
+PUBLICATION_PROXY=http://127.0.0.1:7897 PUBLICATION_ARTIFACT_DIR=artifacts/publication-0.5.0 PUBLICATION_UPGRADE_FROM=artifacts/packages/conversation-navigator-0.4.0.user.js node tests/published-install.mjs
+```
+
+代理参数仅在已有对应代理时设置。公开发布截图：
+
+![Greasy Fork v0.5.0](images/greasyfork-0.5.0.png)
 
 本地功能截图：
 

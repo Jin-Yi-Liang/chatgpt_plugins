@@ -2903,12 +2903,50 @@
     "failureBoundary": "Missing source preserves clipboard; actual permission-denial UI is handled but not artificially forced in GM API"
   },
   "publication": {
-    "status": "pending_authentication",
-    "currentPublicVersion": "0.4.0",
-    "targetVersion": "0.5.0",
-    "reason": "Previously authenticated Chrome is not connected; available in-app browser is logged out. User asked to restore Chrome or log in through visible in-app Greasy Fork page.",
-    "publicUpgradeVerified": false,
-    "plannedUpgradeFrom": "0.4.0",
-    "preparedSmoke": "questions, title/deletion persistence, H3, real formula double-click and native Ctrl+V; version-gated for existing public release"
+    "status": "published",
+    "date": "2026-10-18",
+    "code": {
+      "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+      "version": "0.5.0",
+      "localSHA256": "71dd4c35f5a256541c7242b11bcab8c4be72c1d5552afbfd38c92533cb3c30c7",
+      "publicSHA256": "4e0327e46284dcbaae3230f211b088781c4d2ea5847fb728069ad9207b64756b",
+      "bodySHA256": "bdd172aede05fb0e2d73b7c829dee2f9da56b1d21bf042003a8844c50a114b55",
+      "exactMatchWithoutPlatformURLs": true,
+      "localBytes": 74711,
+      "publicBytes": 74959
+    },
+    "installation": {
+      "page": "https://greasyfork.org/zh-CN/scripts/600317-%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA-chatgpt",
+      "install": "https://update.greasyfork.org/scripts/600317/%E5%AF%B9%E8%AF%9D%E5%AF%BC%E8%88%AA%20%C2%B7%20ChatGPT.user.js",
+      "version": "0.5.0",
+      "browsers": [
+        {
+          "browser": "chromium",
+          "engine": "156.0.8078.4",
+          "publicInstall": true,
+          "dashboardVersion": "0.5.0",
+          "productionHTTPSFixture": "Actual question and nested H3 navigation clicks passed",
+          "nestedHeadings": true,
+          "formulaClipboard": "Double-click -> native Ctrl+V exactly E=mc^2",
+          "upgrade": {
+            "from": "0.4.0",
+            "to": "0.5.0",
+            "customTitlePreserved": true,
+            "deletionPreserved": true
+          }
+        },
+        {
+          "browser": "firefox",
+          "engine": "157.0",
+          "publicInstall": true,
+          "dashboardVersion": "0.5.0",
+          "scope": "Public page -> actual Tampermonkey install -> installed dashboard; no signed-in ChatGPT claim"
+        }
+      ],
+      "passed": true
+    },
+    "proof": "docs/images/greasyfork-0.5.0.png",
+    "scope": "Authenticated in-app browser published original entry600317. Independent public install tests used existing HTTP proxy in isolated browser profiles; no system network/security changes."
   }
 }
