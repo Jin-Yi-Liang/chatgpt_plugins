@@ -93,8 +93,17 @@ try {
   await outline.locator('.heading-item[data-level="2"] > .heading-line > .heading-children-toggle').click();
   await outline.locator('.heading-item[data-level="3"] > .heading-line > .heading-jump').click();
   await until(() => content.evaluate(() => Math.abs(document.querySelector('#public-h3').getBoundingClientRect().top - 16) <= 3), 'public H3 navigation');
+  const supportsFormulaCopy = Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) >= 5;
+  if (supportsFormulaCopy) {
+    await content.locator('[data-message-id="answer-1"] .katex-html').first().dblclick();
+    await until(async () => (await content.locator('#conversation-navigator-root .formula-toast').innerText()).includes('已复制 LaTeX'), 'public formula copy callback');
+    await content.locator('#paste-target').fill('');
+    await content.locator('#paste-target').focus();
+    await content.keyboard.press('Control+V');
+    assert.equal(await content.locator('#paste-target').inputValue(), 'E=mc^2', 'public double-click -> actual Ctrl+V');
+  }
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
-    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true,
+    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true, formulaClipboard: supportsFormulaCopy ? 'Double-click -> native Ctrl+V exactly E=mc^2' : null,
     upgrade: upgradedContent ? { from: upgradeFromVersion, to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];
