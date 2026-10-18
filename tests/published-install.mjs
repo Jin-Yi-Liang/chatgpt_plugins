@@ -12,6 +12,7 @@ import { conversation } from './fixture.mjs';
 const root = process.cwd();
 const artifacts = path.resolve(process.env.PUBLICATION_ARTIFACT_DIR || 'artifacts/publication');
 const links = JSON.parse(await readFile(process.env.PUBLICATION_LINKS_FILE || 'tests/published-release.json', 'utf8'));
+const testProxy = process.env.PUBLICATION_PROXY;
 const receipt = { page: links.page, install: links.install, version: links.version, browsers: [] };
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(fn, label) {
@@ -28,6 +29,7 @@ try {
   await writeFile(path.join(chromeProfile, 'Default/Preferences'), JSON.stringify({ extensions: { ui: { developer_mode: true } } }));
   const manager = path.join(root, 'artifacts/tampermonkey/chrome');
   context = await chromium.launchPersistentContext(chromeProfile, { channel: 'chromium', headless: true,
+    ...(testProxy ? { proxy: { server: testProxy } } : {}),
     locale: 'en-US', viewport: { width: 1440, height: 1000 },
     args: [`--disable-extensions-except=${manager}`, `--load-extension=${manager}`] });
   const page = await context.newPage();
@@ -56,7 +58,7 @@ try {
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 2), 'old release deletion saved');
     await delay(300);
   }
-  await page.goto(links.page);
+  await page.goto(links.page, { waitUntil: 'domcontentloaded' });
   const install = page.getByRole('link', { name: /^(安装此脚本|更新到 .+ 版本)$/ });
   assert.equal(await install.getAttribute('href'), links.install);
   const previousInstallers = new Set(context.pages().filter(tab => tab.url().includes('/ask.html')));
@@ -107,6 +109,12 @@ try {
     .setBinary(process.env.FIREFOX_BINARY || '/snap/firefox/current/usr/lib/firefox/firefox')
     .setPreference('intl.locale.requested', 'en-US')
     .setPreference('extensions.webextensions.uuids', JSON.stringify({ 'firefox@tampermonkey.net': firefoxManagerUUID }));
+  if (testProxy) {
+    const proxyURL = new URL(testProxy);
+    options.setPreference('network.proxy.type', 1)
+      .setPreference('network.proxy.http', proxyURL.hostname).setPreference('network.proxy.http_port', Number(proxyURL.port))
+      .setPreference('network.proxy.ssl', proxyURL.hostname).setPreference('network.proxy.ssl_port', Number(proxyURL.port));
+  }
   const service = new firefox.ServiceBuilder(process.env.GECKODRIVER || '/snap/bin/geckodriver')
     .addArguments('--profile-root', path.join(root, '.test-profiles'), '--allow-system-access');
   driver = await new Builder().forBrowser('firefox').setFirefoxOptions(options).setFirefoxService(service).build();

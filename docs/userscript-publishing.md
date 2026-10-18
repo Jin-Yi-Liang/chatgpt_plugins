@@ -1,14 +1,14 @@
 # 油猴构建、安装与 Greasy Fork 发布
 
-资料及操作核实日期：**2026-10-15**。当前公开版本 **v0.3.3**。
+资料及操作核实日期：**2026-10-18**。当前公开版本 **v0.3.4**。
 
-v0.3.3 已更新原条目600317，包含异步挂载等待与定位完成条件修复：
+v0.3.4 已更新原条目600317，包含整轮消息回收后的远距离定位与节点身份校验修复：
 
 - [公开安装 / 更新页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)
 - [直接安装 .user.js](https://update.greasyfork.org/scripts/600317/对话导航%20%C2%B7%20ChatGPT.user.js)
-- 源码分支 `fix/navigation-completion`，实现提交 `8171b43`。本轮未推送 GitHub、未合并 main。
+- 源码分支 `fix/distant-navigation`，本轮推送该修复分支，保留 main。
 
-线上文件与经过148组验收的本地文件一致，仅由平台增加下载和更新地址。本地 SHA-256 为 `570dc02431c0ddebaab1fd4325634d33da1b44d8be415380e8a34e55eb614c33`。本版证据见 [v0.3.3 验收记录](verification-0.3.3.md)，首次发布历史见 [v0.3.1 记录](verification-0.3.1.md)。
+线上文件与经过160组验收的本地文件一致，仅由平台增加下载和更新地址。本地 SHA-256 为 `78ca255786ad71fa5e88c5e0869257f005661857c135ac43a33e755873bff284`。本版证据见 [v0.3.4 验收记录](verification-0.3.4.md)，首次发布历史见 [v0.3.1 记录](verification-0.3.1.md)。
 
 ## 1. 安装与分发的关系
 
@@ -22,7 +22,7 @@ v0.3.3 已更新原条目600317，包含异步挂载等待与定位完成条件�
 
 ## 2. 从源码生成交付文件
 
-需要 Node.js 22+ 与 npm。先取得包含本版分支的源码；本地分支尚未推送时，远程克隆无法取得本版实现。以下命令均在项目根目录运行：
+需要 Node.js 22+ 与 npm。先取得包含本版分支的源码；本版已推送 `fix/distant-navigation`，克隆后需选择该分支。以下命令均在项目根目录运行：
 
 ```bash
 npm ci
@@ -42,12 +42,12 @@ dist/userscript/chatgpt-conversation-navigator.user.js
 npm run package
 ```
 
-v0.3.3 的三个发布文件：
+v0.3.4 的三个发布文件：
 
 ```text
-artifacts/packages/conversation-navigator-0.3.3.user.js
-artifacts/packages/conversation-navigator-chrome-0.3.3.zip
-artifacts/packages/conversation-navigator-firefox-0.3.3.zip
+artifacts/packages/conversation-navigator-0.3.4.user.js
+artifacts/packages/conversation-navigator-chrome-0.3.4.zip
+artifacts/packages/conversation-navigator-firefox-0.3.4.zip
 ```
 
 只上传 `.user.js` 到 Greasy Fork。扩展 ZIP、manifest、`src/content.js` 都不能替代完整用户脚本。生成目录不提交 Git；他人可从源码重建。
@@ -58,13 +58,13 @@ artifacts/packages/conversation-navigator-firefox-0.3.3.zip
 2. Chrome 如要求授权用户脚本，打开 Tampermonkey 扩展详情中的“允许用户脚本 / Allow User Scripts”。Tampermonkey 5.3+ 与 Chrome 138+ 的说明见 [官方 FAQ Q209](https://www.tampermonkey.net/faq.php?q=Q209)。
 3. 停用本项目原生扩展，避免重复注入占用同一个面板。
 4. 打开 Tampermonkey 管理面板 → “实用工具 / Utilities” → 从文件导入。
-5. 选择完整 `.user.js`，在确认页核对名称“对话导航 · ChatGPT”、版本 `0.3.3`、两个 ChatGPT HTTPS 域名，点击安装。
-6. 刷新 ChatGPT 并进入已有会话。面板应显示 `ChatGPT · v0.3.3`。
+5. 选择完整 `.user.js`，在确认页核对名称“对话导航 · ChatGPT”、版本 `0.3.4`、两个 ChatGPT HTTPS 域名，点击安装。
+6. 刷新 ChatGPT 并进入已有会话。面板应显示 `ChatGPT · v0.3.4`。
 7. 用无敏感信息的会话检查单击跳转、长目录滚轮、标题保存、导航项删除、H1 折叠子导航、多选复制和下载。
 
 另一种安装方式：Tampermonkey 新建脚本，替换编辑器内容为完整构建文件并保存。更新已有副本时在原脚本条目中替换，保持 `@name` 与 `@namespace`，避免创建重复脚本。
 
-原生扩展与油猴、不同浏览器的本地状态独立保存；v0.3.3 没有自动迁移标题或删除状态。
+原生扩展与油猴、不同浏览器的本地状态独立保存；v0.3.4 没有自动迁移标题或删除状态。
 
 ## 4. 本次实现与发布规则
 
@@ -102,18 +102,18 @@ npm run package
 
 | 运行方式 | Chromium / Chrome for Testing 156.0.8078.4 | Firefox 157.0 |
 | --- | --- | --- |
-| 原生扩展 | 37/37 通过 | 37/37 通过 |
-| Tampermonkey | 5.5.1，37/37 通过 | 5.5.0，37/37 通过 |
+| 原生扩展 | 40/40 通过 | 40/40 通过 |
+| Tampermonkey | 5.5.1，40/40 通过 | 5.5.0，40/40 通过 |
 
-共 **148/148 组**，包括单击位置与重排校正、窗口化目录、真实滚轮 / 键盘、标题及删除持久化、只读 H1、剪贴板实际粘贴、浏览器实际下载及内容一致性、菜单、会话切换、主题和窄屏。web-ext lint 为 0 错误 / 0 通知 / 0 警告。
+共 **160/160 组**，包括单击位置与重排校正、窗口化目录、真实滚轮 / 键盘、标题及删除持久化、只读 H1、剪贴板实际粘贴、浏览器实际下载及内容一致性、菜单、会话切换、主题和窄屏。web-ext lint 为 0 错误 / 0 通知 / 0 警告。
 
 测试使用隔离真实浏览器与模拟会话、用户提供的脱敏 DOM。Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文未修改；生产脚本仅匹配 HTTPS。Chrome 采用官方 CRX 解压并恢复官方扩展 ID，Firefox 采用 AMO 签名 XPI。**这些结果不代表新版油猴已在用户登录 ChatGPT 的会话里现场验收，也不代表已经完成线上安装或更新测试。**
 
-证据：[v0.3.3 验收说明](verification-0.3.3.md)、[可复核数据](verification-0.3.3.json)。完整运行报告位于 `artifacts/tests/report.json` 与 `artifacts/tests-userscript/report.json`。
+证据：[v0.3.4 验收说明](verification-0.3.4.md)、[可复核数据](verification-0.3.4.json)。完整运行报告位于 `artifacts/tests/report.json` 与 `artifacts/tests-userscript/report.json`。
 
 ## 6. 账号准备与实际发布表单
 
-首次发布需要先登录作者账号，平台也可能要求邮箱验证与 2FA，或仅第三方登录。作者已亲自完成必要设置；2026-10-15 已成功进入代码表单并提交。
+首次发布需要先登录作者账号，平台也可能要求邮箱验证与 2FA，或仅第三方登录。作者已亲自完成必要设置；2026-10-16 已成功进入代码表单并提交。
 
 涉及密码、认证器、恢复信息的步骤应由作者本人执行，不将这些信息放入源码、自动化报告或公开 Issue。
 
@@ -122,13 +122,13 @@ npm run package
 ## 7. 发布与更新流程
 
 1. 在“脚本类型”选择“公开用户脚本”。
-2. 将 `artifacts/packages/conversation-navigator-0.3.3.user.js` 的完整内容填入“代码”，不是扩展 ZIP，也不是开发入口。
+2. 将 `artifacts/packages/conversation-navigator-0.3.4.user.js` 的完整内容填入“代码”，不是扩展 ZIP，也不是开发入口。
 3. 在“附加信息”选择 **Markdown**，粘贴 [公开介绍](greasyfork-description.md)。
 4. “脚本语言”选择“汉语（中国）”，与默认名称、描述和第一份附加信息一致；英文名称由元信息提供。
 5. 核对四项 GM 授权、固定依赖、MIT、版本和两个 HTTPS 匹配，首次发布点击“发布脚本”，已有条目从“更新”进入并点击“发布新版本”。如平台出现人机验证，由作者本人处理；本次提交没有出现需人工处理的挑战。
-6. 页面跳转到脚本条目 `600317`，检查公开名称、版本 `0.3.3`、许可、适用站点、介绍表格和安装按钮。
+6. 页面跳转到脚本条目 `600317`，检查公开名称、版本 `0.3.4`、许可、适用站点、介绍表格和安装按钮。
 7. 下载公开安装文件，与通过测试的文件比较主体代码及版本、匹配、授权、依赖、namespace、许可。元信息中平台增加的更新地址另行记录。
-8. 在隔离浏览器配置中安装官方 Tampermonkey，从公开页点击安装并检查管理器中的版本。这一分发链路与本地完整功能验收分别记录，见 [本版验收说明](verification-0.3.3.md)。
+8. 在隔离浏览器配置中安装官方 Tampermonkey，从公开页点击安装并检查管理器中的版本。这一分发链路与本地完整功能验收分别记录，见 [本版验收说明](verification-0.3.4.md)。
 
 本次代码和介绍已经公开。运行截图保存在本地验收材料；浏览器自动化扩展未启用本地文件上传权限，因此公开条目未附截图，发布的代码和说明不受影响。
 
@@ -149,4 +149,4 @@ GitHub 远程在本次只读检查中，main 为 `856316b`，尚未包含油猴�
 
 本地完整功能验收：四种运行环境各 31 组，共 124 组通过。独立性能基准命令 `npm run test:performance` 使用真实 Chromium 和 1,500 条固定目录，对照 v0.3.0；结果仅代表目录模块计算，不等同于整页性能。
 
-发布记录、线上主体哈希、公开安装验证和限制汇总在 [v0.3.3 验收说明](verification-0.3.3.md) 与 [JSON 数据](verification-0.3.3.json)。后续旧版本自动更新及存储迁移，需要在未来版本实际发布时验证，当前没有提前记为通过。
+发布记录、线上主体哈希、公开安装验证和限制汇总在 [v0.3.4 验收说明](verification-0.3.4.md) 与 [JSON 数据](verification-0.3.4.json)。后续旧版本自动更新及存储迁移，需要在未来版本实际发布时验证，当前没有提前记为通过。
