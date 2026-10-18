@@ -6,6 +6,7 @@ import { version } from '../package.json';
 import { createNavigation } from './navigation.js';
 import { createInventory } from './inventory.js';
 import { createDiscovery, needsDiscovery } from './discovery.js';
+import { installFormulaCopy } from './formula-copy.js';
 
 const adapter = findAdapter(location);
 if (adapter && !document.getElementById('conversation-navigator-root')) start();
@@ -24,14 +25,14 @@ async function start() {
       <div class="list-tools"><span id="results-count">共 0 条</span><button id="locate-current" title="在目录中显示当前提问">当前提问</button></div>
       <div id="selection-hint" class="selection-hint" hidden></div>
       <div class="list" role="list" aria-label="提问列表"></div>
-      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
+      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><label>双击公式复制<select id="formula-format"><option value="latex">LaTeX 源码</option><option value="markdown">Markdown 公式</option></select></label><p>双击模型回复中的公式即可复制，复制结果可按 Ctrl+V 粘贴。</p><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
       <div class="footer"><div class="export-buttons"><button class="primary" id="copy" disabled>复制 Markdown</button><button id="export" disabled>导出 .md</button></div><div class="status" role="status" aria-live="polite">勾选问题，按对话顺序合并模型回复。</div></div>
-    </aside><button class="launcher" id="expand" hidden aria-label="展开对话导航">≡ 对话导航 <span>0</span></button>`;
+    </aside><button class="launcher" id="expand" hidden aria-label="展开对话导航">≡ 对话导航 <span>0</span></button><div class="formula-toast" role="status" aria-live="polite" hidden></div>`;
   const style = document.createElement('style'); style.textContent = styles; shadow.prepend(style);
   document.body.append(host);
   const $ = selector => shadow.querySelector(selector);
   $('.heading small').textContent = `ChatGPT · v${version}`;
-  let settings = { collapsed: false, includeHeadings: false, mode: 'auto' };
+  let settings = { collapsed: false, includeHeadings: false, mode: 'auto', formulaFormat: 'latex' };
   let turns = [], titles = {}, deleted = new Set(), selected = new Set(), expanded = new Set(), conversation = '', signature = '', editing = null;
   let inventory = createInventory(), scanned = false;
   const rowCache = new Map();
@@ -54,6 +55,23 @@ async function start() {
   let lastFirstKey = '';
 
   function notify(text) { $('.status').textContent = text; }
+  let formulaNoticeTimer;
+  function formulaNotice(text) {
+    notify(text);
+    const toast = $('.formula-toast'); toast.textContent = text; toast.hidden = false;
+    clearTimeout(formulaNoticeTimer);
+    formulaNoticeTimer = setTimeout(() => { toast.hidden = true; }, 3000);
+  }
+  installFormulaCopy({
+    copy: text => copyText(text, shadow), notice: formulaNotice, getFormat: () => settings.formulaFormat,
+    isReply: node => {
+      if (node.closest('[data-user-message-bubble]')) return false;
+      const role = node.closest('[data-message-author-role]');
+      if (role) return role.getAttribute('data-message-author-role') === 'assistant';
+      if (node.closest('[data-markdown-text-style]') && node.closest('[data-chatgpt-conversation-selection-target], [data-turn-key], [data-thread-user-message-navigation-content]')) return true;
+      return collect().some(turn => turn.answers.some(answer => answer.contains(node)));
+    }
+  });
   function reportStorageError(error) { console.warn('[Conversation Navigator] Storage unavailable', error); notify('本地保存失败，修改仍可在本页使用。请检查扩展是否仍启用。'); }
   function enqueueSave(key, value) {
     writeQueue = writeQueue.catch(() => {}).then(() => writeStorage(key, value));
@@ -343,6 +361,7 @@ async function start() {
 
   try { const saved = await readStorage('settings'); if (saved) settings = { ...settings, ...saved }; } catch (error) { reportStorageError(error); }
   $('.panel').hidden = settings.collapsed; $('#expand').hidden = !settings.collapsed;
+  $('#formula-format').value = settings.formulaFormat === 'markdown' ? 'markdown' : 'latex';
   $('#include-headings').checked = settings.includeHeadings; $('#compatibility').value = settings.mode;
   $('#collapse').addEventListener('click', () => collapsed(true)); $('#expand').addEventListener('click', () => collapsed(false));
   $('#settings-toggle').addEventListener('click', () => { const value = !$('.settings').hidden; $('.settings').hidden = value; $('#settings-toggle').setAttribute('aria-expanded', String(!value)); });
@@ -353,6 +372,7 @@ async function start() {
   $('#select-visible').addEventListener('click', () => { matchingTurns().forEach(turn => selected.add(turn.key)); render(); });
   $('#select-none').addEventListener('click', () => { selected.clear(); render(); });
   $('#include-headings').addEventListener('change', () => { settings.includeHeadings = $('#include-headings').checked; saveSettings(); });
+  $('#formula-format').addEventListener('change', () => { settings.formulaFormat = $('#formula-format').value; saveSettings(); });
   $('#compatibility').addEventListener('change', () => { settings.mode = $('#compatibility').value; signature = ''; saveSettings(); schedule(); });
   $('#forget-titles').addEventListener('click', () => { titles = {}; persist(); render(); notify('已恢复本会话的原始提问标题。'); });
   $('#copy').addEventListener('click', () => exportText(false)); $('#export').addEventListener('click', () => exportText(true));

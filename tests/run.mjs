@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { experienceTests } from './experience.mjs';
 import { navigationRegressions } from './navigation-regressions.mjs';
+import { formulaCopyTests, formulaConversation } from './formula-copy.mjs';
 import { headingOutlineTests } from './heading-outline.mjs';
 import { distantNavigationTests } from './distant-navigation.mjs';
 import { recycledConversation } from './recycled-fixture.mjs';
@@ -49,7 +50,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
-  if (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_HEADINGS) {
+  if (!process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_HEADINGS) {
   if (!process.env.TEST_ONLY_STARTUP) {
   if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
@@ -352,12 +353,14 @@ async function sharedTests(ui, entry) {
   }
   if (!process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION) await navigationRegressions(ui, { check, shadow, wait, pause, entry });
   }
-  if (!process.env.TEST_ONLY_HEADINGS && (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
-  if (process.env.TEST_ONLY_HEADINGS || (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await headingOutlineTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  if (!process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_HEADINGS && (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
+  if (!process.env.TEST_ONLY_FORMULAS && (process.env.TEST_ONLY_HEADINGS || (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await headingOutlineTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  if (process.env.TEST_ONLY_FORMULAS || (!process.env.TEST_ONLY_HEADINGS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await formulaCopyTests(ui, { check, shadow, wait, pause, artifactDir, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-heading-virtual') ? recycledConversation(false, 64, true)
+const htmlFor = url => url.includes('fixture-formula') ? formulaConversation
+  : url.includes('fixture-heading-virtual') ? recycledConversation(false, 64, true)
   : url.includes('fixture-recycled-') ? recycledConversation(url.includes('reverse'))
   : url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
   : url.includes('fixture-experience-100') ? scrollConversation(false, 100)
@@ -389,6 +392,8 @@ if (browserList.includes('chromium')) {
     const ui = {
       errors, eval: (fn, arg) => page.evaluate(fn, arg),
       goto: route => page.goto(`https://chatgpt.com${route}`), reload: () => page.reload(),
+      pageClick: selector => page.locator(selector).click(),
+      doubleClick: selector => page.locator(selector).dblclick(),
       click: selector => page.locator(`#conversation-navigator-root ${selector}`).click(),
       press: (selector, key) => page.locator(`#conversation-navigator-root ${selector}`).press(key),
       fill: (selector, value) => page.locator(`#conversation-navigator-root ${selector}`).fill(value),
@@ -498,6 +503,17 @@ if (browserList.includes('firefox')) {
         await driver.switchTo().window(content);
         await wait(async () => await driver.executeScript('return document.visibilityState') === 'visible', 'foreground Firefox click');
         await (await element(selector)).click();
+      },
+      pageClick: async selector => (await driver.findElement(By.css(selector))).click(),
+      doubleClick: async selector => {
+        const content = await driver.getWindowHandle();
+        for (const handle of await driver.getAllWindowHandles()) {
+          if (handle !== content) { await driver.switchTo().window(handle); await driver.close(); }
+        }
+        await driver.switchTo().window(content);
+        const target = await driver.findElement(By.css(selector));
+        await driver.executeScript('arguments[0].scrollIntoView({block:"center"})',target);
+        await driver.actions({async:true}).doubleClick(target).perform();
       },
       press: async (selector, key) => (await element(selector)).sendKeys(({Enter: Key.ENTER, Escape: Key.ESCAPE, Space: Key.SPACE, Tab: Key.TAB})[key] || key),
       fill: async (selector, value) => { const el = await element(selector); await el.clear(); if (value) await el.sendKeys(value); else await driver.executeScript('arguments[0].dispatchEvent(new Event("input", {bubbles:true}))', el); },
