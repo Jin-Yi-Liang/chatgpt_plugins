@@ -12,6 +12,22 @@ function ownerOf(node) {
   return { owner, identity };
 }
 function sameOwner(owner, identity) { return !identity || owner?.getAttribute(identity.attribute) === identity.value; }
+function scrollAncestors(anchor) {
+  const nodes = [];
+  for (let node = anchor.parentElement; node; node = node.parentElement) {
+    if (/(auto|scroll|overlay)/.test(getComputedStyle(node).overflowY)) nodes.push(node);
+  }
+  if (!nodes.includes(document.scrollingElement)) nodes.push(document.scrollingElement);
+  return nodes.map(node => ({ node, top: node.scrollTop, range: Math.max(0, node.scrollHeight - node.clientHeight), reverse: getComputedStyle(node).flexDirection === 'column-reverse' }));
+}
+function readingTargets(turns) {
+  const paired = turns.flatMap(turn => [turn.anchor, ...turn.answers]).filter(hasLayout);
+  if (paired.length) return paired;
+  // A virtual window may contain only a long assistant reply while its user
+  // bubble is unmounted. Reading preservation must not require a paired turn.
+  return [...document.querySelectorAll('[data-message-author-role="assistant"], [data-turn-key] [data-markdown-text-style], article .markdown')]
+    .filter(node => !node.closest('[hidden], [aria-hidden="true"], [contenteditable="true"]') && hasLayout(node));
+}
 let styleSequence = 0;
 function temporaryStyles(container, previous = null) {
   const marker = 'data-conversation-navigator-reading';
@@ -50,20 +66,40 @@ export function createReadingPosition({ collect, enabled, beforeHold, onState })
     if (!state) return;
     if (!enabled() || location.href !== state.route) { cancel(); return; }
     if (!state.confirmed && state.text && (!state.editor.isConnected || !textOf(state.editor))) confirm();
-    if (!state.container.isConnected) {
-      const targets = collect().flatMap(turn => [turn.anchor, ...turn.answers]).filter(hasLayout);
-      if (!targets.length) return;
-      state.styles.restore(); state.container = scrollContainer(targets[0]);
-      state.styles = temporaryStyles(state.container, state.styles);
-    }
-    const container = state.container, area = viewport(container);
-    const range = Math.max(0, container.scrollHeight - container.clientHeight);
-    let top = state.top - (state.reverse ? range - state.range : 0);
     let owner = state.owner;
     if ((!hasLayout(owner) || !sameOwner(owner, state.identity)) && state.identity) {
       const { attribute, value } = state.identity;
       owner = document.querySelector(`[${attribute}="${CSS.escape(value)}"]`);
     }
+    const anchorOwned = hasLayout(state.anchor) && sameOwner(state.owner, state.identity) && (!state.owner || (state.owner.isConnected && state.owner.contains(state.anchor)));
+    const reference = anchorOwned ? state.anchor : hasLayout(owner) ? owner : null;
+    let next = reference ? scrollContainer(reference) : state.container;
+    if (!next.isConnected) {
+      const targets = readingTargets(collect());
+      if (!targets.length) return;
+      next = scrollContainer(targets[0]);
+    }
+    // A short transcript may acquire its first scrollbar only after submission.
+    // Keep every pre-existing scroll ancestor observable, then rebind to the
+    // effective scroll port once overflow/layout changes.
+    let rebound = false;
+    if (next !== state.container && (next !== document.scrollingElement || next.scrollHeight > next.clientHeight + 1 || !state.container.isConnected)) {
+      const original = state.ancestors.find(item => item.node === next);
+      state.styles.restore(); state.container = next; state.styles = temporaryStyles(next, state.styles);
+      if (original) { state.top = original.top; state.range = original.range; state.reverse = original.reverse; }
+      rebound = true;
+    }
+    for (const saved of state.ancestors) {
+      if (!saved.node.isConnected || saved.node === state.container) continue;
+      const range = Math.max(0, saved.node.scrollHeight - saved.node.clientHeight);
+      const top = saved.top - (saved.reverse ? range - saved.range : 0);
+      const destination = Math.max(saved.reverse ? -range : 0, Math.min(saved.reverse ? 0 : range, top));
+      if (Math.abs(saved.node.scrollTop - destination) > 1) saved.node.scrollTo({ top: destination, behavior: 'instant' });
+    }
+    const container = state.container, area = viewport(container);
+    if (rebound) { state.offset = state.screenTop - area.top; state.ownerOffset = state.ownerScreenTop === null ? null : state.ownerScreenTop - area.top; }
+    const range = Math.max(0, container.scrollHeight - container.clientHeight);
+    let top = state.top - (state.reverse ? range - state.range : 0);
     const anchorValid = hasLayout(state.anchor) && container.contains(state.anchor) && sameOwner(state.owner, state.identity) && (!state.owner || (state.owner.isConnected && state.owner.contains(state.anchor)));
     if (anchorValid) top = container.scrollTop + state.anchor.getBoundingClientRect().top - area.top - state.offset;
     else if (hasLayout(owner) && sameOwner(owner, state.identity) && container.contains(owner) && state.ownerOffset !== null) {
@@ -78,19 +114,20 @@ export function createReadingPosition({ collect, enabled, beforeHold, onState })
     if (!enabled() || !editor || (!allowEmpty && !textOf(editor))) return;
     if (hold && hold.route === location.href) { queue(); return; }
     const turns = collect();
-    const targets = turns.flatMap(turn => [turn.anchor, ...turn.answers]).filter(hasLayout);
+    const targets = readingTargets(turns);
     if (!targets.length) return;
     const container = scrollContainer(targets[0]), area = viewport(container);
     const port = container === document.scrollingElement ? { left: 0, width: innerWidth } : container.getBoundingClientRect();
     const point = document.elementFromPoint(port.left + Math.min(port.width * 0.45, 450), area.top + Math.min(80, area.height / 4));
-    let anchor = point?.closest('p, li, pre, table, h1, h2, h3, [data-user-message-bubble], [data-message-author-role], [data-markdown-text-style]');
-    if (!anchor || !container.contains(anchor) || !targets.some(target => target === anchor || target.contains(anchor))) {
+    let anchor = point?.closest('p, li, pre, table, h1, h2, h3, .markdown, [data-user-message-bubble], [data-message-author-role], [data-markdown-text-style]');
+    const chatBody = anchor?.closest('[data-message-author-role="assistant"], [data-markdown-text-style], article .markdown');
+    if (!anchor || !container.contains(anchor) || (!chatBody && !targets.some(target => target === anchor || target.contains(anchor)))) {
       anchor = targets.find(node => { const rect = node.getBoundingClientRect(); return rect.bottom > area.top && rect.top < area.top + area.height; });
     }
     if (!anchor) return;
     const { owner, identity } = ownerOf(anchor);
     const state = { route: location.href, editor, text: textOf(editor), keys: new Set(turns.map(turn => turn.key)),
-      container, anchor, owner, identity, top: container.scrollTop, range: Math.max(0, container.scrollHeight - container.clientHeight),
+      container, anchor, owner, identity, ancestors: scrollAncestors(anchor), screenTop: anchor.getBoundingClientRect().top, ownerScreenTop: hasLayout(owner) ? owner.getBoundingClientRect().top : null, top: container.scrollTop, range: Math.max(0, container.scrollHeight - container.clientHeight),
       reverse: getComputedStyle(container).flexDirection === 'column-reverse', offset: anchor.getBoundingClientRect().top - area.top,
       ownerOffset: hasLayout(owner) ? owner.getBoundingClientRect().top - area.top : null,
       styles: temporaryStyles(container), confirmed: false };
@@ -132,7 +169,7 @@ export function createReadingPosition({ collect, enabled, beforeHold, onState })
       && (hold.container === document.scrollingElement || hold.container.contains(event.target))) cancel();
   }, { capture: true, passive: true });
   document.addEventListener('scroll', event => {
-    if (hold && (event.target === hold.container || (hold.container === document.scrollingElement && event.target === document))) restore();
+    if (hold && (event.target === hold.container || hold.ancestors.some(item => item.node === event.target) || (event.target === document && hold.ancestors.some(item => item.node === document.scrollingElement)))) restore();
   }, { capture: true, passive: true });
   new MutationObserver(queue).observe(document.body, { childList: true, subtree: true, characterData: true });
   window.addEventListener('resize', queue); window.addEventListener('popstate', () => { if (hold && location.href !== hold.route) cancel(); });
