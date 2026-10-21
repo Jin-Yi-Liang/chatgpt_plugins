@@ -7,6 +7,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { chromeManagerId, firefoxManagerUUID, installChromeScript } from './tampermonkey.mjs';
 import { conversation } from './fixture.mjs';
+import { readingConversation } from './reading-position.mjs';
 
 const publicConversation = conversation.replace('<h2>第一份回复</h2>', '<h1>公开一级标题</h1><p style="height:1000px">公开安装验收</p><h2>公开二级标题</h2><p style="height:1000px">二级正文</p><h3 id="public-h3">公开三级标题</h3>');
 
@@ -48,7 +49,7 @@ try {
     upgradeFromVersion = previousCode.match(/^\/\/\s+@version\s+(\S+)/m)?.[1];
     assert.ok(upgradeFromVersion, 'old release version metadata');
     await installChromeScript(context, page, path.resolve(process.env.PUBLICATION_UPGRADE_FROM));
-    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: publicConversation }));
+    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
     upgradedContent = await context.newPage();
     await upgradedContent.goto('https://chatgpt.com/c/public-install-smoke');
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'old release runs before upgrade');
@@ -60,7 +61,10 @@ try {
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 2), 'old release deletion saved');
     await delay(300);
   }
-  await page.goto(links.page, { waitUntil: 'domcontentloaded' });
+  for (let attempt=0;;attempt++) {
+    try { await page.goto(links.page, { waitUntil: 'domcontentloaded' }); break; }
+    catch(error) { if(attempt>=2 || !/ERR_NETWORK_CHANGED|Timeout/.test(error.message))throw error; }
+  }
   const install = page.getByRole('link', { name: /^(安装此脚本|更新到 .+ 版本)$/ });
   assert.equal(await install.getAttribute('href'), links.install);
   const previousInstallers = new Set(context.pages().filter(tab => tab.url().includes('/ask.html')));
@@ -76,7 +80,7 @@ try {
   await page.screenshot({ path: path.join(artifacts, 'chrome-public-installed.png') });
   // Exercise the publicly installed production script with controlled HTTPS data.
   // Use a fresh content tab: the installer's final dashboard redirect can be delayed.
-  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: publicConversation }));
+  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
   const content = upgradedContent || await context.newPage();
   if (upgradedContent) await content.reload();
   else await content.goto('https://chatgpt.com/c/public-install-smoke');
@@ -102,8 +106,35 @@ try {
     await content.keyboard.press('Control+V');
     assert.equal(await content.locator('#paste-target').inputValue(), 'E=mc^2', 'public double-click -> actual Ctrl+V');
   }
+  let readingPosition = null, readingOverflowTransition = null;
+  if (Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) >= 6) {
+    await content.goto('https://chatgpt.com/c/public-reading-smoke');
+    await until(() => content.locator('#conversation-navigator-root .row').count().then(count => count === 8), 'public reading fixture ready');
+    await content.evaluate(() => window.prepareReading());
+    const before = await content.evaluate(() => { const p=document.getElementById('thread');return document.getElementById('reading-line-3').getBoundingClientRect().top-p.getBoundingClientRect().top-p.clientTop; });
+    await content.locator('#prompt-textarea').fill('公开升级：发送后保留当前阅读位置');
+    await content.locator('#prompt-textarea').press('Enter');
+    await delay(2800);
+    readingPosition = await content.evaluate(() => { const p=document.getElementById('thread');return {afterOffset:document.getElementById('reading-line-3').getBoundingClientRect().top-p.getBoundingClientRect().top-p.clientTop,state:document.querySelector('#conversation-navigator-root').dataset.readingPosition,...window.readingStats}; });
+    readingPosition.beforeOffset = before;
+    assert.ok(Math.abs(readingPosition.afterOffset-before)<=3, 'public send preserves historical reading paragraph');
+    assert.equal(readingPosition.submissions, 1); assert.equal(readingPosition.streamed, 4); assert.equal(readingPosition.state, 'held');
+  }
+  if (Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) > 6 || (Number(links.version.split('.')[1]) === 6 && Number(links.version.split('.')[2]) >= 1)) {
+    await content.goto('https://chatgpt.com/c/public-reading-short');
+    await until(() => content.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'public short conversation ready');
+    await content.evaluate(() => window.prepareReading());
+    const before = await content.evaluate(() => { const p=document.getElementById('thread');return {offset:document.getElementById('reading-line-3').getBoundingClientRect().top-p.getBoundingClientRect().top-p.clientTop,range:p.scrollHeight-p.clientHeight}; });
+    assert.equal(before.range,0,'short conversation initially has no overflow');
+    await content.locator('#prompt-textarea').fill('公开升级：首个滚动条出现后仍保留位置');
+    await content.locator('#prompt-textarea').press('Enter');await delay(2800);
+    readingOverflowTransition = await content.evaluate(() => { const p=document.getElementById('thread');return {afterOffset:document.getElementById('reading-line-3').getBoundingClientRect().top-p.getBoundingClientRect().top-p.clientTop,range:p.scrollHeight-p.clientHeight,state:document.querySelector('#conversation-navigator-root').dataset.readingPosition,...window.readingStats}; });
+    readingOverflowTransition.beforeOffset=before.offset;
+    assert.ok(readingOverflowTransition.range>0);assert.ok(Math.abs(readingOverflowTransition.afterOffset-before.offset)<=3,'public first-overflow transition preserves position');
+    assert.equal(readingOverflowTransition.submissions,1);
+  }
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
-    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true, formulaClipboard: supportsFormulaCopy ? 'Double-click -> native Ctrl+V exactly E=mc^2' : null,
+    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true, readingPosition, readingOverflowTransition, formulaClipboard: supportsFormulaCopy ? 'Double-click -> native Ctrl+V exactly E=mc^2' : null,
     upgrade: upgradedContent ? { from: upgradeFromVersion, to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];

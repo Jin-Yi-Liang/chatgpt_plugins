@@ -2,14 +2,14 @@
 
 在 ChatGPT 网页右侧添加按用户提问组织的目录，方便浏览长会话，并把选中的模型回复连续复制或导出为 Markdown。
 
-当前版本 **0.5.0**，支持桌面 Chrome / Firefox 的 Tampermonkey。运行网站：`https://chatgpt.com/`、旧域名 `https://chat.openai.com/`。DeepSeek 与 Claude 仅预留代码接口，当前未启用。
+当前版本 **0.6.1**，支持桌面 Chrome / Firefox 的 Tampermonkey。运行网站：`https://chatgpt.com/`、旧域名 `https://chat.openai.com/`。DeepSeek 与 Claude 仅预留代码接口，当前未启用。
 
-## v0.5.0 更新
+## v0.6.1 更新
 
-- 双击模型生成的公式，复制 LaTeX 源码到剪贴板，可直接 Ctrl+V 粘贴；支持行内、独立、多行和矩阵公式。
-- 设置中可选“Markdown 公式”：行内复制为 `$...$`，独立公式复制为 `$$` 块；默认复制不带分隔符的 LaTeX 源码。
-- 已有和后续动态生成的公式均可使用；面板收起时也显示复制反馈。无法读取源码时提示原因并保留原剪贴板。
-- 保留 H1/H2/H3 三级目录、远距离导航、提问改名、导航删除和 Markdown 导出。
+- 新增“发送后保持阅读位置”，默认开启：在历史消息中发送新提示词后，停留在原阅读段落，回复更新时继续保持。
+- 支持Enter、发送按钮、页面/内层滚动、反向列表及布局变化；覆盖发送后首次出现滚动条、当前窗口仅显示长回复等情况，不改变提示词或发送请求。
+- 正文滚动、滚动按键、目录跳转、网站的“到底部”按钮和切换会话可接管；设置中可关闭并保存偏好。
+- 保留三级标题目录、公式双击复制、导航编辑/删除和Markdown导出。
 
 ## 安装
 
@@ -23,6 +23,7 @@
 
 | 操作 | 效果 |
 | --- | --- |
+| 发送新提示词 | 默认保持原阅读位置；设置中可关闭，正文滚动或导航可接管 |
 | 双击公式 | 复制 LaTeX；设置中可切换 Markdown 格式，随后 Ctrl+V 粘贴 |
 | 单击提问文字 | 定位到对应提问，页面布局变化时短暂校正 |
 | 导航内滚轮 | 浏览完整目录，上下边界不继续带动会话页面 |
@@ -59,10 +60,10 @@
 - 服务端未加载的历史、隐藏分支、复杂图表 / Canvas 内容无法保证完整读取。ChatGPT 页面结构变化可能需要更新。
 - 读取回复的一至三级标题；H4～H6 不列入导航，Markdown 导出仍保留原始标题层级。选区与展开状态刷新后重置，标题、删除状态和偏好保留。
 
-本版在真实 Chrome for Testing 156 / Firefox 157 中安装官方 Tampermonkey 5.5.1 / 5.5.0，分别通过 47 组集成测试；原生扩展另有 94 组回归。会话采用模拟数据及脱敏 DOM，并非作者登录 ChatGPT 会话的现场验收。
+本版在真实 Chrome for Testing 156 / Firefox 158 中安装官方 Tampermonkey 5.5.1 / 5.5.0，分别通过 51 组集成测试；原生扩展另有 102 组回归。会话采用模拟数据及脱敏 DOM，并非作者登录 ChatGPT 会话的现场验收。
 
 ## 源码与反馈
 
-MIT 许可。[源码仓库](https://github.com/Jin-Yi-Liang/chatgpt_plugins) · [问题反馈](https://github.com/Jin-Yi-Liang/chatgpt_plugins/issues)。
+MIT 许可。[源码仓库](https://github.com/Jin-Yi-Liang/chatgpt_plugins/tree/codex/preserve-reading-position) · [问题反馈](https://github.com/Jin-Yi-Liang/chatgpt_plugins/issues)。
 
 反馈请提供浏览器、Tampermonkey / 脚本版本、复现步骤、会话长度，以及脱敏截图或结构信息。请勿提交聊天正文、密码、验证码或访问令牌。
