@@ -7,6 +7,7 @@ import { createNavigation } from './navigation.js';
 import { createInventory } from './inventory.js';
 import { createDiscovery, needsDiscovery } from './discovery.js';
 import { installFormulaCopy } from './formula-copy.js';
+import { createReadingPosition } from './reading-position.js';
 
 const adapter = findAdapter(location);
 if (adapter && !document.getElementById('conversation-navigator-root')) start();
@@ -25,21 +26,26 @@ async function start() {
       <div class="list-tools"><span id="results-count">共 0 条</span><button id="locate-current" title="在目录中显示当前提问">当前提问</button></div>
       <div id="selection-hint" class="selection-hint" hidden></div>
       <div class="list" role="list" aria-label="提问列表"></div>
-      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><label>双击公式复制<select id="formula-format"><option value="latex">LaTeX 源码</option><option value="markdown">Markdown 公式</option></select></label><p>双击模型回复中的公式即可复制，复制结果可按 Ctrl+V 粘贴。</p><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
+      <div class="settings" hidden><label><input id="include-headings" type="checkbox">导出包含提问 / 自定义标题</label><label>页面适配<select id="compatibility"><option value="auto">自动识别</option><option value="compatibility">兼容模式</option></select></label><label><input id="keep-reading" type="checkbox">发送后保持阅读位置</label><label>双击公式复制<select id="formula-format"><option value="latex">LaTeX 源码</option><option value="markdown">Markdown 公式</option></select></label><p>双击模型回复中的公式即可复制，复制结果可按 Ctrl+V 粘贴。</p><p>DeepSeek、Claude 接口已预留，当前版本支持 ChatGPT。标题、删除状态与偏好保存在本地，对话正文仅在本页内存中用于导航和导出。</p><button id="forget-titles">重置本会话标题</button></div>
       <div class="footer"><div class="export-buttons"><button class="primary" id="copy" disabled>复制 Markdown</button><button id="export" disabled>导出 .md</button></div><div class="status" role="status" aria-live="polite">勾选问题，按对话顺序合并模型回复。</div></div>
     </aside><button class="launcher" id="expand" hidden aria-label="展开对话导航">≡ 对话导航 <span>0</span></button><div class="formula-toast" role="status" aria-live="polite" hidden></div>`;
   const style = document.createElement('style'); style.textContent = styles; shadow.prepend(style);
   document.body.append(host);
   const $ = selector => shadow.querySelector(selector);
   $('.heading small').textContent = `ChatGPT · v${version}`;
-  let settings = { collapsed: false, includeHeadings: false, mode: 'auto', formulaFormat: 'latex' };
+  let settings = { collapsed: false, includeHeadings: false, mode: 'auto', formulaFormat: 'latex', keepReading: true };
   let turns = [], titles = {}, deleted = new Set(), selected = new Set(), expanded = new Set(), conversation = '', signature = '', editing = null;
   let inventory = createInventory(), scanned = false;
   const rowCache = new Map();
   let panelReturnFocus = null;
   const navigation = createNavigation();
   const collect = () => adapter.collect(document, settings.mode);
+  const reading = createReadingPosition({ collect, enabled: () => settings.keepReading !== false,
+    beforeHold: () => { navigation.cancel(); discovery.cancel(); },
+    onState: state => { host.dataset.readingPosition = state; if (state === 'held') notify('已保持发送前的阅读位置；滚动正文或点击导航可接管。'); }
+  });
   function accept(observed) {
+    reading.observe(observed);
     turns = inventory.merge(observed);
     const nextSignature = JSON.stringify(turns.map(turn => [turn.key, turn.prompt, turn.answers.length, turn.headings.map(heading => [heading.key, heading.title, heading.level, heading.parentKey])]));
     if (nextSignature !== signature) { signature = nextSignature; render(); }
@@ -111,7 +117,7 @@ async function start() {
   function deletedInInventory() { return turns.reduce((count, turn) => count + Number(deleted.has(turn.key)), 0); }
   let jumpGeneration = 0;
   async function jump(key, headingKey = null) {
-    discovery.cancel();
+    reading.cancel(); discovery.cancel();
     // Row listeners keep only the stable key; React may have replaced the original DOM node.
     // Resolve refreshes missing targets on demand; a live target needs no full transcript scan.
     const route = location.href;
@@ -313,7 +319,7 @@ async function start() {
     let next = adapter.collect(document, settings.mode);
     const nextConversation = adapter.conversationKey(location, next);
     if (nextConversation !== conversation) {
-      navigation.cancel(); discovery.cancel(); inventory = createInventory(); scanned = false;
+      reading.cancel(); navigation.cancel(); discovery.cancel(); inventory = createInventory(); scanned = false;
       const previous = conversation, previousTitles = { ...titles }, previousDeleted = new Set(deleted), previousFirst = lastFirstKey;
       conversation = nextConversation; loaded = false; selected.clear(); expanded.clear(); editing = null; titles = {}; deleted = new Set(); turns = []; signature = ''; host.dataset.discovery = 'idle'; $('#search').value = ''; render();
       const currentGeneration = ++generation;
@@ -332,7 +338,7 @@ async function start() {
     }
     if (!loaded) return;
     accept(next); lastFirstKey = turns[0]?.key || '';
-    if (!scanned && next.length && needsDiscovery(next)) {
+    if (!reading.active && !scanned && next.length && needsDiscovery(next)) {
       scanned = true;
       discovery.run().catch(error => { console.error('[Conversation Navigator] Discovery', error); notify('目录整理未完成，滚动对话后会继续识别提问。'); });
     }
@@ -361,6 +367,7 @@ async function start() {
 
   try { const saved = await readStorage('settings'); if (saved) settings = { ...settings, ...saved }; } catch (error) { reportStorageError(error); }
   $('.panel').hidden = settings.collapsed; $('#expand').hidden = !settings.collapsed;
+  $('#keep-reading').checked = settings.keepReading !== false;
   $('#formula-format').value = settings.formulaFormat === 'markdown' ? 'markdown' : 'latex';
   $('#include-headings').checked = settings.includeHeadings; $('#compatibility').value = settings.mode;
   $('#collapse').addEventListener('click', () => collapsed(true)); $('#expand').addEventListener('click', () => collapsed(false));
@@ -372,6 +379,7 @@ async function start() {
   $('#select-visible').addEventListener('click', () => { matchingTurns().forEach(turn => selected.add(turn.key)); render(); });
   $('#select-none').addEventListener('click', () => { selected.clear(); render(); });
   $('#include-headings').addEventListener('change', () => { settings.includeHeadings = $('#include-headings').checked; saveSettings(); });
+  $('#keep-reading').addEventListener('change', () => { settings.keepReading = $('#keep-reading').checked; if (!settings.keepReading) reading.cancel(); saveSettings(); });
   $('#formula-format').addEventListener('change', () => { settings.formulaFormat = $('#formula-format').value; saveSettings(); });
   $('#compatibility').addEventListener('change', () => { settings.mode = $('#compatibility').value; signature = ''; saveSettings(); schedule(); });
   $('#forget-titles').addEventListener('click', () => { titles = {}; persist(); render(); notify('已恢复本会话的原始提问标题。'); });

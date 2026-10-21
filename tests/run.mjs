@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { conversation, fallbackConversation } from './fixture.mjs';
 import { experienceTests } from './experience.mjs';
 import { navigationRegressions } from './navigation-regressions.mjs';
+import { readingPositionTests, readingConversation } from './reading-position.mjs';
 import { formulaCopyTests, formulaConversation } from './formula-copy.mjs';
 import { headingOutlineTests } from './heading-outline.mjs';
 import { distantNavigationTests } from './distant-navigation.mjs';
@@ -50,7 +51,7 @@ async function sharedTests(ui, entry) {
   const rows = () => shadow(root => root?.querySelectorAll('.row').length || 0);
   const title = index => shadow((root, index) => root.querySelectorAll('.title')[index]?.textContent, index);
   const status = () => shadow(root => root.querySelector('.status').textContent);
-  if (!process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_HEADINGS) {
+  if (!process.env.TEST_ONLY_READING && !process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_HEADINGS) {
   if (!process.env.TEST_ONLY_STARTUP) {
   if (!process.env.TEST_ONLY_EXPERIENCE) {
   if (!process.env.TEST_ONLY_NAVIGATION) {
@@ -353,13 +354,15 @@ async function sharedTests(ui, entry) {
   }
   if (!process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION) await navigationRegressions(ui, { check, shadow, wait, pause, entry });
   }
-  if (!process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_HEADINGS && (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
-  if (!process.env.TEST_ONLY_FORMULAS && (process.env.TEST_ONLY_HEADINGS || (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await headingOutlineTests(ui, { check, shadow, wait, pause, artifactDir, entry });
-  if (process.env.TEST_ONLY_FORMULAS || (!process.env.TEST_ONLY_HEADINGS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await formulaCopyTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  if (!process.env.TEST_ONLY_READING && !process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_HEADINGS && (process.env.TEST_ONLY_DISTANT || (!process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await distantNavigationTests(ui, { check, shadow, wait, pause, entry });
+  if (!process.env.TEST_ONLY_READING && !process.env.TEST_ONLY_FORMULAS && (process.env.TEST_ONLY_HEADINGS || (!process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await headingOutlineTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  if (!process.env.TEST_ONLY_READING && (process.env.TEST_ONLY_FORMULAS || (!process.env.TEST_ONLY_HEADINGS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION))) await formulaCopyTests(ui, { check, shadow, wait, pause, artifactDir, entry });
+  if (process.env.TEST_ONLY_READING || (!process.env.TEST_ONLY_FORMULAS && !process.env.TEST_ONLY_HEADINGS && !process.env.TEST_ONLY_DISTANT && !process.env.TEST_ONLY_STARTUP && !process.env.TEST_ONLY_EXPERIENCE && !process.env.TEST_ONLY_NAVIGATION)) await readingPositionTests(ui, { check, shadow, wait, pause, artifactDir, entry });
   if (ui.errors.length) throw new Error(`Browser errors: ${ui.errors.join('\n')}`);
 }
 
-const htmlFor = url => url.includes('fixture-formula') ? formulaConversation
+const htmlFor = url => url.includes('fixture-reading-') ? readingConversation(url.split('fixture-reading-')[1].split(/[?#]/)[0])
+  : url.includes('fixture-formula') ? formulaConversation
   : url.includes('fixture-heading-virtual') ? recycledConversation(false, 64, true)
   : url.includes('fixture-recycled-') ? recycledConversation(url.includes('reverse'))
   : url.includes('fixture-preloaded-tall') ? preloadedTallConversation()
@@ -392,6 +395,8 @@ if (browserList.includes('chromium')) {
     const ui = {
       errors, eval: (fn, arg) => page.evaluate(fn, arg),
       goto: route => page.goto(`https://chatgpt.com${route}`), reload: () => page.reload(),
+      pageFill: (selector,value) => page.locator(selector).fill(value),
+      pageKey: (selector,key) => page.locator(selector).press(key),
       pageClick: selector => page.locator(selector).click(),
       doubleClick: selector => page.locator(selector).dblclick(),
       click: selector => page.locator(`#conversation-navigator-root ${selector}`).click(),
@@ -504,6 +509,8 @@ if (browserList.includes('firefox')) {
         await wait(async () => await driver.executeScript('return document.visibilityState') === 'visible', 'foreground Firefox click');
         await (await element(selector)).click();
       },
+      pageFill: async (selector,value) => {const el=await driver.findElement(By.css(selector));await el.clear();if(value)await el.sendKeys(value);},
+      pageKey: async (selector,key) => (await driver.findElement(By.css(selector))).sendKeys(({Enter:Key.ENTER,'Shift+Enter':Key.chord(Key.SHIFT,Key.ENTER)})[key]||key),
       pageClick: async selector => (await driver.findElement(By.css(selector))).click(),
       doubleClick: async selector => {
         const content = await driver.getWindowHandle();
