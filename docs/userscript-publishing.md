@@ -1,14 +1,14 @@
 # 油猴构建、安装与 Greasy Fork 发布
 
-资料及操作核实日期：**2026-10-21**。当前公开版本 **v0.6.1**。
+资料及操作核实日期：**2026-10-27**。当前公开版本 **v0.6.2**。
 
-v0.6.1 已完成204组本地验收并发布到原条目600317。默认发送后保持历史阅读位置，并保留公式复制、三级目录与远距离定位：
+v0.6.2 已完成212组本地验收并发布到原条目600317。修复流式期间手动滚动被拉回原位置，保留发送位置、公式复制、三级目录与远距离定位：
 
 - [公开安装 / 更新页](https://greasyfork.org/zh-CN/scripts/600317-对话导航-chatgpt)
 - [直接安装 .user.js](https://update.greasyfork.org/scripts/600317/对话导航%20%C2%B7%20ChatGPT.user.js)
-- 本轮从完整v0.5.0新建 `codex/preserve-reading-position`，提交本地并推送远程功能分支，保留main。
+- 本轮从v0.6.1提交4a10672新建 `codex/streaming-scroll-control`，提交本地并推送远程功能分支，保留main。
 
-已核对公开文件与204组验收文件一致，平台仅补入下载和更新URL。Chrome实际公开升级后保留标题/删除状态，发送后保持位置、短会话首次溢出、H3及公式双击后的实际Ctrl+V均通过；Firefox公开安装核验通过。本地 SHA-256 为 `b8abafe264ace35661dce4fb73ecfa658b3a116b5d4199cebfac97e53863c2a5`。本版证据见 [v0.6.1 验收记录](verification-0.6.1.md)，首次发布历史见 [v0.3.1 记录](verification-0.3.1.md)。
+已核对公开文件与212组验收文件一致，平台仅补入下载和更新URL。Chrome实际公开升级后保留标题/删除状态，流式期间滚动接管、发送后保持位置、短会话首次溢出、H3及公式双击后的实际Ctrl+V均通过；Firefox公开安装核验通过。本地 SHA-256 为 `09ca843594e352c335351abe77f21258ced8af27bf1a9ba40a2bb8c7a0129301`。本版证据见 [v0.6.2 验收记录](verification-0.6.2.md)，首次发布历史见 [v0.3.1 记录](verification-0.3.1.md)。
 
 ## 1. 安装与分发的关系
 
@@ -22,7 +22,7 @@ v0.6.1 已完成204组本地验收并发布到原条目600317。默认发送后�
 
 ## 2. 从源码生成交付文件
 
-需要 Node.js 22+ 与 npm。先取得包含本版分支的源码；远程 main 为已整合的 v0.3.4；本轮完整v0.6.1源码在远程 `codex/preserve-reading-position` 功能分支，当前工作区也可直接构建；v0.6.1 可从公开页安装或使用本地文件。以下命令均在项目根目录运行：
+需要 Node.js 22+ 与 npm。先取得包含本版分支的源码；远程 main 为已整合的 v0.3.4；本轮完整v0.6.2源码在远程 `codex/streaming-scroll-control` 功能分支，当前工作区也可直接构建；v0.6.2 可从公开页安装或使用本地文件。以下命令均在项目根目录运行：
 
 ```bash
 npm ci
@@ -42,12 +42,12 @@ dist/userscript/chatgpt-conversation-navigator.user.js
 npm run package
 ```
 
-v0.6.1 的三个发布文件：
+v0.6.2 的三个发布文件：
 
 ```text
-artifacts/packages/conversation-navigator-0.6.1.user.js
-artifacts/packages/conversation-navigator-chrome-0.6.1.zip
-artifacts/packages/conversation-navigator-firefox-0.6.1.zip
+artifacts/packages/conversation-navigator-0.6.2.user.js
+artifacts/packages/conversation-navigator-chrome-0.6.2.zip
+artifacts/packages/conversation-navigator-firefox-0.6.2.zip
 ```
 
 只上传 `.user.js` 到 Greasy Fork。扩展 ZIP、manifest、`src/content.js` 都不能替代完整用户脚本。生成目录不提交 Git；他人可从源码重建。
@@ -58,13 +58,13 @@ artifacts/packages/conversation-navigator-firefox-0.6.1.zip
 2. Chrome 如要求授权用户脚本，打开 Tampermonkey 扩展详情中的“允许用户脚本 / Allow User Scripts”。Tampermonkey 5.3+ 与 Chrome 138+ 的说明见 [官方 FAQ Q209](https://www.tampermonkey.net/faq.php?q=Q209)。
 3. 停用本项目原生扩展，避免重复注入占用同一个面板。
 4. 打开 Tampermonkey 管理面板 → “实用工具 / Utilities” → 从文件导入。
-5. 选择完整 `.user.js`，在确认页核对名称“对话导航 · ChatGPT”、版本 `0.6.1`、两个 ChatGPT HTTPS 域名，点击安装。
-6. 刷新 ChatGPT 并进入已有会话。面板应显示 `ChatGPT · v0.6.1`。
+5. 选择完整 `.user.js`，在确认页核对名称“对话导航 · ChatGPT”、版本 `0.6.2`、两个 ChatGPT HTTPS 域名，点击安装。
+6. 刷新 ChatGPT 并进入已有会话。面板应显示 `ChatGPT · v0.6.2`。
 7. 用无敏感信息的会话检查单击跳转、长目录滚轮、标题保存、导航项删除、H1/H2/H3 逐层折叠目录、多选复制和下载。
 
 另一种安装方式：Tampermonkey 新建脚本，替换编辑器内容为完整构建文件并保存。更新已有副本时在原脚本条目中替换，保持 `@name` 与 `@namespace`，避免创建重复脚本。
 
-原生扩展与油猴、不同浏览器的本地状态独立保存；v0.6.1 没有自动迁移标题或删除状态。
+原生扩展与油猴、不同浏览器的本地状态独立保存；v0.6.2 没有自动迁移标题或删除状态。
 
 ## 4. 本次实现与发布规则
 
@@ -102,14 +102,14 @@ npm run package
 
 | 运行方式 | Chromium / Chrome for Testing 156.0.8078.4 | Firefox 158.0 |
 | --- | --- | --- |
-| 原生扩展 | 51/51 通过 | 51/51 通过 |
-| Tampermonkey | 5.5.1，51/51 通过 | 5.5.0，51/51 通过 |
+| 原生扩展 | 53/53 通过 | 53/53 通过 |
+| Tampermonkey | 5.5.1，53/53 通过 | 5.5.0，53/53 通过 |
 
-共 **204/204 组**，包括单击位置与重排校正、窗口化目录、真实滚轮 / 键盘、标题及删除持久化、只读三级标题、剪贴板实际粘贴、浏览器实际下载及内容一致性、菜单、会话切换、主题和窄屏。web-ext lint 为 0 错误 / 0 通知 / 0 警告。
+共 **212/212 组**，包括单击位置与重排校正、窗口化目录、真实滚轮 / 键盘、标题及删除持久化、只读三级标题、剪贴板实际粘贴、浏览器实际下载及内容一致性、菜单、会话切换、主题和窄屏。web-ext lint 为 0 错误 / 0 通知 / 0 警告。
 
 测试使用隔离真实浏览器与模拟会话、用户提供的脱敏 DOM。Firefox 测试副本仅增加本地代理需要的 HTTP 匹配，正文未修改；生产脚本仅匹配 HTTPS。Chrome 采用官方 CRX 解压并恢复官方扩展 ID，Firefox 采用 AMO 签名 XPI。**这些结果不代表新版油猴已在用户登录 ChatGPT 的会话里现场验收，也不代表已经完成线上安装或更新测试。**
 
-证据：[v0.6.1 验收说明](verification-0.6.1.md)、[可复核数据](verification-0.6.1.json)。完整运行报告位于 `artifacts/tests/report.json` 与 `artifacts/tests-userscript/report.json`。
+证据：[v0.6.2 验收说明](verification-0.6.2.md)、[可复核数据](verification-0.6.2.json)。完整运行报告位于 `artifacts/tests-0.6.2-final/report.json` 与 `artifacts/tests-userscript-0.6.2-final/report.json`。
 
 ## 6. 账号准备与实际发布表单
 
@@ -122,17 +122,17 @@ npm run package
 ## 7. 发布与更新流程
 
 1. 在“脚本类型”选择“公开用户脚本”。
-2. 将 `artifacts/packages/conversation-navigator-0.6.1.user.js` 的完整内容填入“代码”，不是扩展 ZIP，也不是开发入口。
+2. 将 `artifacts/packages/conversation-navigator-0.6.2.user.js` 的完整内容填入“代码”，不是扩展 ZIP，也不是开发入口。
 3. 在“附加信息”选择 **Markdown**，粘贴 [公开介绍](greasyfork-description.md)。
 4. “脚本语言”选择“汉语（中国）”，与默认名称、描述和第一份附加信息一致；英文名称由元信息提供。
 5. 核对四项 GM 授权、固定依赖、MIT、版本和两个 HTTPS 匹配，首次发布点击“发布脚本”，已有条目从“更新”进入并点击“发布新版本”。如平台出现人机验证，由作者本人处理；本次提交没有出现需人工处理的挑战。
-6. 页面跳转到脚本条目 `600317`，检查公开名称、版本 `0.6.1`、许可、适用站点、介绍表格和安装按钮。
+6. 页面跳转到脚本条目 `600317`，检查公开名称、版本 `0.6.2`、许可、适用站点、介绍表格和安装按钮。
 7. 下载公开安装文件，与通过测试的文件比较主体代码及版本、匹配、授权、依赖、namespace、许可。元信息中平台增加的更新地址另行记录。
-8. 在隔离浏览器配置中安装官方 Tampermonkey，从公开页点击安装并检查管理器中的版本。这一分发链路与本地完整功能验收分别记录，见 [本版验收说明](verification-0.6.1.md)。
+8. 在隔离浏览器配置中安装官方 Tampermonkey，从公开页点击安装并检查管理器中的版本。这一分发链路与本地完整功能验收分别记录，见 [本版验收说明](verification-0.6.2.md)。
 
 本次代码和介绍已经公开。运行截图保存在本地验收材料；浏览器自动化扩展未启用本地文件上传权限，因此公开条目未附截图，发布的代码和说明不受影响。
 
-main 在前次整合中已同步到 `bf78d3e`（v0.3.4）。本轮 v0.6.1 源码在本地和远程 `codex/preserve-reading-position` 分支；公开安装文件包含完整主代码，可直接从 Greasy Fork 安装。
+main 在前次整合中已同步到 `bf78d3e`（v0.3.4）。本轮 v0.6.2 源码在本地和远程 `codex/streaming-scroll-control` 分支；公开安装文件包含完整主代码，可直接从 Greasy Fork 安装。
 
 ## 8. 后续版本更新
 
@@ -140,13 +140,13 @@ main 在前次整合中已同步到 `bf78d3e`（v0.3.4）。本轮 v0.6.1 源码
 2. 构建、运行上面的两套浏览器测试与检查。若修改依赖，重新核对固定版本 / SHA-256。
 3. 提交源码、测试及文档到 Git，生成新版本 `.user.js`。
 4. 从自己的已有脚本页进入发布新版本，上传完整新文件，填写更新说明；保持 `@name` 和 `@namespace`，不要创建新脚本条目。
-5. 在保留旧版标题、删除状态和偏好的浏览器中触发 Tampermonkey 更新；核对新版、状态持久化和核心功能。本轮已验证0.5.0→0.6.1的公开手动升级，不能把该结果等同于已经触发管理器的定时自动更新。
+5. 在保留旧版标题、删除状态和偏好的浏览器中触发 Tampermonkey 更新；核对新版、状态持久化和核心功能。本轮已验证0.6.1→0.6.2的公开手动升级，不能把该结果等同于已经触发管理器的定时自动更新。
 6. 校验线上主代码与经过测试的构建一致，记录版本 / URL / 哈希，更新 README 和发布记录。
 
 本次采用完整代码直接发布，没有配置自动远程同步，也没有主逻辑更新轮询。Greasy Fork / Tampermonkey 负责后续脚本更新地址；见 [官方元信息说明](https://greasyfork.org/zh-CN/help/meta-keys)。
 
 ## 9. 发布验证与证据
 
-本地完整功能验收：四种运行环境各51组，共204组通过。独立性能基准命令 `npm run test:performance` 使用真实 Chromium 和 1,500 条固定目录，对照 v0.3.0；结果仅代表目录模块计算，不等同于整页性能。
+本地完整功能验收：四种运行环境各53组，共212组通过。独立性能基准命令 `npm run test:performance` 使用真实 Chromium 和 1,500 条固定目录，对照 v0.3.0；结果仅代表目录模块计算，不等同于整页性能。
 
-发布记录、线上主体哈希、公开安装验证和限制汇总在 [v0.6.1 验收说明](verification-0.6.1.md) 与 [JSON 数据](verification-0.6.1.json)。本轮公开手动升级及标题/删除状态保留已验证；管理器定时自动检查周期未单独触发测试。
+发布记录、线上主体哈希、公开安装验证和限制汇总在 [v0.6.2 验收说明](verification-0.6.2.md) 与 [JSON 数据](verification-0.6.2.json)。本轮公开手动升级及标题/删除状态保留已验证；管理器定时自动检查周期未单独触发测试。
