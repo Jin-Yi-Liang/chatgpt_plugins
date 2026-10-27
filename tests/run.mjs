@@ -386,7 +386,7 @@ if (browserList.includes('chromium')) {
       entry.manager = JSON.parse(await readFile(path.join(managerDirectory, 'sources.json'), 'utf8')).chrome;
       entry.extension = 'Official Tampermonkey CRX unpacked with original ID; own WebExtension NOT loaded; production .user.js imported through manager UI';
     }
-    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, locale: 'en-US', viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${chromeExtension}`, `--load-extension=${chromeExtension}`] });
+    context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, ignoreDefaultArgs: ['--hide-scrollbars'], locale: 'en-US', viewport: { width: 1440, height: 1000 }, args: [`--disable-extensions-except=${chromeExtension}`, `--load-extension=${chromeExtension}`] });
     entry.engine = context.browser()?.version();
     await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: htmlFor(route.request().url()) }));
     const page = await context.newPage();
@@ -398,7 +398,9 @@ if (browserList.includes('chromium')) {
       pageFill: (selector,value) => page.locator(selector).fill(value),
       pageKey: (selector,key) => page.locator(selector).press(key),
       pageClick: selector => page.locator(selector).click(),
+      async pageScrollbar(selector) { const p=await page.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.right-11,y:r.top+el.clientHeight*(el.scrollTop+el.clientHeight/2)/el.scrollHeight}}); await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x,p.y+100,{steps:10});await page.mouse.up(); },
       doubleClick: selector => page.locator(selector).dblclick(),
+      async pageWheel(selector,delta) { const r=await page.locator(selector).boundingBox(); await page.mouse.move(r.x+Math.min(r.width/2,350),r.y+Math.min(r.height/2,180)); await page.mouse.wheel(0,delta); },
       click: selector => page.locator(`#conversation-navigator-root ${selector}`).click(),
       press: (selector, key) => page.locator(`#conversation-navigator-root ${selector}`).press(key),
       fill: (selector, value) => page.locator(`#conversation-navigator-root ${selector}`).fill(value),
@@ -512,6 +514,8 @@ if (browserList.includes('firefox')) {
       pageFill: async (selector,value) => {const el=await driver.findElement(By.css(selector));await el.clear();if(value)await el.sendKeys(value);},
       pageKey: async (selector,key) => (await driver.findElement(By.css(selector))).sendKeys(({Enter:Key.ENTER,'Shift+Enter':Key.chord(Key.SHIFT,Key.ENTER)})[key]||key),
       pageClick: async selector => (await driver.findElement(By.css(selector))).click(),
+      async pageWheel(selector,delta) { const point=await driver.executeScript('const r=document.querySelector(arguments[0]).getBoundingClientRect();return {x:Math.round(r.x+Math.min(r.width/2,350)),y:Math.round(r.y+Math.min(r.height/2,180))}',selector); await driver.actions({async:true}).scroll(point.x,point.y,0,delta).perform(); },
+      async pageScrollbar(selector) { const p=await driver.executeScript('const el=document.querySelector(arguments[0]),r=el.getBoundingClientRect();return {x:Math.round(r.right-11),y:Math.round(r.top+el.clientHeight*(el.scrollTop+el.clientHeight/2)/el.scrollHeight)}',selector); await driver.actions({async:true}).move({x:p.x,y:p.y}).press().move({x:p.x,y:p.y+100,duration:250}).release().perform(); },
       doubleClick: async selector => {
         const content = await driver.getWindowHandle();
         for (const handle of await driver.getAllWindowHandles()) {

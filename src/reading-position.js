@@ -11,6 +11,25 @@ function ownerOf(node) {
   const identity = owner && ['data-message-id', 'data-turn-key', 'data-turn-id', 'data-testid'].map(attribute => ({ attribute, value: owner.getAttribute(attribute) })).find(item => item.value);
   return { owner, identity };
 }
+// An editor may consume its own wheel input. At its boundary (including an
+// empty composer after sending), the browser can chain the gesture to the page.
+function editorConsumesWheel(event) {
+  const editor = event.target.closest?.(editorSelector);
+  if (!editor || event.type !== 'wheel' || !event.deltaY) return false;
+  const range = editor.scrollHeight - editor.clientHeight;
+  return range > 1 && (event.deltaY < 0 ? editor.scrollTop > 1 : editor.scrollTop < range - 1);
+}
+function onScrollbar(event, container) {
+  if (!container.isConnected || container.scrollHeight <= container.clientHeight + 1) return false;
+  const documentPort = container === document.scrollingElement;
+  const rect = documentPort ? { left: 0, right: innerWidth, top: 0, bottom: innerHeight } : container.getBoundingClientRect();
+  const left = rect.left + container.clientLeft, right = left + container.clientWidth;
+  // Check both edges for RTL/native left-hand scrollbars. An overlay scrollbar
+  // may have zero layout width; include its hit area at the edge of the port.
+  return event.clientY >= rect.top && event.clientY <= rect.bottom
+    && (documentPort || event.target === container)
+    && (event.clientX >= right - 2 || event.clientX < left || (documentPort && event.clientX <= 2));
+}
 function sameOwner(owner, identity) { return !identity || owner?.getAttribute(identity.attribute) === identity.value; }
 function scrollAncestors(anchor) {
   const nodes = [];
@@ -144,29 +163,28 @@ export function createReadingPosition({ collect, enabled, beforeHold, onState })
     return null;
   }
   function editorFor(button) { return button.form?.querySelector(editorSelector) || document.querySelector(editorSelector); }
-  document.addEventListener('keydown', event => {
+  window.addEventListener('keydown', event => {
     if (!event.isTrusted || inNavigator(event)) return;
     if (event.key === 'Escape' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f')) { cancel(); return; }
     const editor = event.target.closest?.(editorSelector);
     if (editor && event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) arm(editor);
     else if (!editor && scrollKeys.includes(event.key)) cancel();
   }, true);
-  for (const type of ['pointerdown', 'click']) document.addEventListener(type, event => {
+  for (const type of ['pointerdown', 'click']) window.addEventListener(type, event => {
     if (!event.isTrusted || inNavigator(event) || !(event.target instanceof Element)) return;
     const button = sendingButton(event.target);
     if (button) { arm(editorFor(button), true); return; }
     const clicked = event.target.closest('button');
     if (clicked && /(?:scroll|jump).*(?:bottom|latest)|(?:滚动|跳转|转到|跳至).*(?:底部|最新)/i.test(`${clicked.getAttribute('aria-label') || ''} ${clicked.title} ${clicked.textContent}`)) { cancel(); return; }
-    if (type === 'pointerdown' && hold) {
-      const port = hold.container, rect = port.getBoundingClientRect();
-      const edge = port === document.scrollingElement ? document.documentElement.clientWidth : rect.left + port.clientLeft + port.clientWidth;
-      if (event.clientX >= edge && (event.target === port || port === document.scrollingElement)) cancel();
-    }
+    if (type === 'pointerdown' && hold && [hold.container, ...hold.ancestors.map(item => item.node)].some(port => onScrollbar(event, port))) cancel();
   }, true);
   document.addEventListener('submit', event => { if (event.isTrusted && !inNavigator(event)) arm(event.target.querySelector?.(editorSelector)); }, true);
-  for (const type of ['wheel', 'touchstart']) document.addEventListener(type, event => {
-    if (hold && event.isTrusted && !inNavigator(event) && !event.target.closest?.(editorSelector)
-      && (hold.container === document.scrollingElement || hold.container.contains(event.target))) cancel();
+  // Restoration watches all saved scroll ancestors, so user takeover must not
+  // depend on a hit inside the original inner port. Capture on window before
+  // document/root handlers can stop propagation. Never prevent the native input:
+  // this preserves wheel/trackpad momentum and the site's own follow cancellation.
+  for (const type of ['wheel', 'touchstart']) window.addEventListener(type, event => {
+    if (hold && event.isTrusted && !inNavigator(event) && !event.ctrlKey && !event.metaKey && !editorConsumesWheel(event)) cancel();
   }, { capture: true, passive: true });
   document.addEventListener('scroll', event => {
     if (hold && (event.target === hold.container || hold.ancestors.some(item => item.node === event.target) || (event.target === document && hold.ancestors.some(item => item.node === document.scrollingElement)))) restore();

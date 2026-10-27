@@ -49,7 +49,7 @@ try {
     upgradeFromVersion = previousCode.match(/^\/\/\s+@version\s+(\S+)/m)?.[1];
     assert.ok(upgradeFromVersion, 'old release version metadata');
     await installChromeScript(context, page, path.resolve(process.env.PUBLICATION_UPGRADE_FROM));
-    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
+    await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-streaming-wheel') ? readingConversation('manual-composer') : route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
     upgradedContent = await context.newPage();
     await upgradedContent.goto('https://chatgpt.com/c/public-install-smoke');
     await until(() => upgradedContent.locator('#conversation-navigator-root .row').count().then(count => count === 3), 'old release runs before upgrade');
@@ -80,7 +80,7 @@ try {
   await page.screenshot({ path: path.join(artifacts, 'chrome-public-installed.png') });
   // Exercise the publicly installed production script with controlled HTTPS data.
   // Use a fresh content tab: the installer's final dashboard redirect can be delayed.
-  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
+  await context.route('https://chatgpt.com/**', route => route.fulfill({ contentType: 'text/html', body: route.request().url().includes('public-streaming-wheel') ? readingConversation('manual-composer') : route.request().url().includes('public-reading-short') ? readingConversation('short') : route.request().url().includes('public-reading-smoke') ? readingConversation('normal') : publicConversation }));
   const content = upgradedContent || await context.newPage();
   if (upgradedContent) await content.reload();
   else await content.goto('https://chatgpt.com/c/public-install-smoke');
@@ -106,7 +106,7 @@ try {
     await content.keyboard.press('Control+V');
     assert.equal(await content.locator('#paste-target').inputValue(), 'E=mc^2', 'public double-click -> actual Ctrl+V');
   }
-  let readingPosition = null, readingOverflowTransition = null;
+  let readingPosition = null, readingOverflowTransition = null, streamingScroll = null;
   if (Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) >= 6) {
     await content.goto('https://chatgpt.com/c/public-reading-smoke');
     await until(() => content.locator('#conversation-navigator-root .row').count().then(count => count === 8), 'public reading fixture ready');
@@ -133,8 +133,25 @@ try {
     assert.ok(readingOverflowTransition.range>0);assert.ok(Math.abs(readingOverflowTransition.afterOffset-before.offset)<=3,'public first-overflow transition preserves position');
     assert.equal(readingOverflowTransition.submissions,1);
   }
+  if (Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) > 6 || (Number(links.version.split('.')[1]) === 6 && Number(links.version.split('.')[2]) >= 2)) {
+    await content.goto('https://chatgpt.com/c/public-streaming-wheel');
+    await until(() => content.locator('#conversation-navigator-root .row').count().then(n=>n===8),'public streaming fixture ready');
+    await content.evaluate(()=>window.prepareReading());
+    await content.locator('#prompt-textarea').fill('公开升级：流式期间滚动可接管');
+    await content.locator('#prompt-textarea').press('Enter');
+    await until(()=>content.evaluate(()=>window.readingStats.streamed>=1),'public stream started');
+    const box=await content.locator('#prompt-textarea').boundingBox();
+    await content.mouse.move(box.x+box.width/2,box.y+box.height/2);await content.mouse.wheel(0,220);
+    await until(()=>content.evaluate(()=>document.querySelector('#conversation-navigator-root').dataset.readingPosition==='idle'&&document.scrollingElement.scrollTop>40),'public native wheel takes control');
+    await delay(300);const moved=await content.evaluate(()=>document.scrollingElement.scrollTop);
+    await delay(2600);
+    streamingScroll=await content.evaluate(()=>({top:document.scrollingElement.scrollTop,state:document.querySelector('#conversation-navigator-root').dataset.readingPosition,...window.readingStats}));
+    assert.equal(streamingScroll.state,'idle');assert.equal(streamingScroll.streamed,4);assert.equal(streamingScroll.submissions,1);
+    assert.ok(Math.abs(streamingScroll.top-moved)<=3,'stream continues without rolling back manual scroll');
+    await content.screenshot({path:path.join(artifacts,'chrome-public-streaming-scroll.png')});
+  }
   receipt.browsers.push({ browser: 'chromium', engine: context.browser().version(), publicInstall: true, dashboardVersion: links.version,
-    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true, readingPosition, readingOverflowTransition, formulaClipboard: supportsFormulaCopy ? 'Double-click -> native Ctrl+V exactly E=mc^2' : null,
+    productionHTTPSFixture: 'Actual question and nested H3 navigation clicks passed', nestedHeadings: true, readingPosition, readingOverflowTransition, streamingScroll, formulaClipboard: supportsFormulaCopy ? 'Double-click -> native Ctrl+V exactly E=mc^2' : null,
     upgrade: upgradedContent ? { from: upgradeFromVersion, to: links.version, customTitlePreserved: true, deletionPreserved: true } : null });
 } catch (error) {
   const pages = [];
@@ -144,6 +161,23 @@ try {
   }
   await writeFile(path.join(artifacts, 'chrome-install-diagnostic.json'), JSON.stringify(pages, null, 2));
   console.error(JSON.stringify(pages.map(page => ({ url: page.url, text: page.text.slice(0, 800) }))));
+  if (Number(links.version.split('.')[0]) > 0 || Number(links.version.split('.')[1]) > 6 || (Number(links.version.split('.')[1]) === 6 && Number(links.version.split('.')[2]) >= 2)) {
+    await content.goto('https://chatgpt.com/c/public-streaming-wheel');
+    await until(() => content.locator('#conversation-navigator-root .row').count().then(n=>n===8),'public streaming fixture ready');
+    await content.evaluate(()=>window.prepareReading());
+    await content.locator('#prompt-textarea').fill('公开升级：流式期间滚动可接管');
+    await content.locator('#prompt-textarea').press('Enter');
+    await until(()=>content.evaluate(()=>window.readingStats.streamed>=1),'public stream started');
+    const box=await content.locator('#prompt-textarea').boundingBox();
+    await content.mouse.move(box.x+box.width/2,box.y+box.height/2);await content.mouse.wheel(0,220);
+    await until(()=>content.evaluate(()=>document.querySelector('#conversation-navigator-root').dataset.readingPosition==='idle'&&document.scrollingElement.scrollTop>40),'public native wheel takes control');
+    await delay(300);const moved=await content.evaluate(()=>document.scrollingElement.scrollTop);
+    await delay(2600);
+    streamingScroll=await content.evaluate(()=>({top:document.scrollingElement.scrollTop,state:document.querySelector('#conversation-navigator-root').dataset.readingPosition,...window.readingStats}));
+    assert.equal(streamingScroll.state,'idle');assert.equal(streamingScroll.streamed,4);assert.equal(streamingScroll.submissions,1);
+    assert.ok(Math.abs(streamingScroll.top-moved)<=3,'stream continues without rolling back manual scroll');
+    await content.screenshot({path:path.join(artifacts,'chrome-public-streaming-scroll.png')});
+  }
   receipt.browsers.push({ browser: 'chromium', passed: false, error: error.stack });
   throw error;
 } finally {

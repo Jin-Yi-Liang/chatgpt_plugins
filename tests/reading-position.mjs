@@ -7,6 +7,8 @@ export function readingConversation(mode='normal') {
   const editorId=mode==='mobile'?'mobile-composer-prompt':'prompt-textarea', sendId=mode==='mobile'?'mobile-send':'composer-submit-button';
   return `<!doctype html><meta charset="utf-8"><title>发送后保持历史阅读位置</title><style>
   body{margin:0;font:16px/1.6 system-ui;background:#f8fafb}header{height:60px}.thread-scroll-container{${documentPort?'':'height:720px;overflow:auto;'}border:3px solid #ddd;display:flex;flex-direction:${reverse?'column-reverse':'column'};overflow-anchor:auto;scroll-behavior:smooth}.transcript{width:720px;flex-shrink:0;margin:0 auto;padding:30px 0 180px}.turn{height:${mode==='short'?150:1900}px;background:white;margin-bottom:20px;padding:20px;box-sizing:border-box}h1{font-size:22px}.reading-line{margin-top:${mode==='short'?8:320}px;padding:15px;background:#edf6f0}form{position:fixed;bottom:10px;left:24px;width:650px;background:white;z-index:10;display:flex;gap:10px;padding:8px}#prompt-textarea,#mobile-composer-prompt{width:480px;min-height:50px;border:1px solid #bbb}#site-bottom{position:fixed;bottom:90px;left:12px;z-index:10}#other-form{display:none}
+  ${mode==='manual-scrollbar'?'.thread-scroll-container{width:1000px;scrollbar-width:auto}#thread::-webkit-scrollbar{width:16px}#thread::-webkit-scrollbar-thumb{background:#888}':''}
+  ${mode==='manual-outer'||mode==='manual-composer'?'body{min-height:1600px}':''}
   </style><header>受控页面：发送与流式更新会反复自动滚到底部</header><main><div class="thread-scroll-container" id="thread" tabindex="0"><div class="transcript">
   ${Array.from({length:count},(_,i)=>`<article class="turn" data-turn-key="reading-${i+1}"><div data-user-message-bubble>历史提问 ${i+1}</div><div data-chatgpt-selection-message-id="reading-answer-${i+1}"><div data-markdown-text-style><h1>历史回复 ${i+1}</h1><p class="reading-line" id="reading-line-${i+1}">正在阅读的历史段落 ${i+1}</p></div></div></article>`).join('')}
   </div></div></main><button id="site-bottom" aria-label="Scroll to bottom">滚动到底部</button>
@@ -17,7 +19,12 @@ export function readingConversation(mode='normal') {
   const editor=document.getElementById('${editorId}'),send=document.getElementById('${sendId}');
   const value=()=>editor.value??editor.textContent;
   window.readingStats={submissions:0,forces:0,streamed:0};
-  function bottom(behavior='instant'){const p=port();p.scrollTo({top:reverse?0:p.scrollHeight,behavior});window.readingStats.forces++;}
+  function bottom(behavior='instant'){if(window.readingStats.manual)return;const p=port();p.scrollTo({top:reverse?0:p.scrollHeight,behavior});window.readingStats.forces++;}
+  if(mode.startsWith('manual-')){
+    window.addEventListener('pointerdown',e=>{const p=port(),r=p.getBoundingClientRect();if(e.isTrusted&&e.clientX>=r.left+p.clientLeft+p.clientWidth-2&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom)window.readingStats.manual=true;},{capture:true,passive:true});
+    window.addEventListener('wheel',e=>{if(e.isTrusted&&!e.composedPath().some(n=>n.id==='conversation-navigator-root')){window.readingStats.manual=true;window.readingStats.trustedWheels=(window.readingStats.trustedWheels||0)+1;}},{capture:true,passive:true});
+    if(mode==='manual-stopped')document.addEventListener('wheel',e=>e.stopImmediatePropagation(),{capture:true,passive:true});
+  }
   editor.addEventListener('input',()=>{send.disabled=!value().trim();});
   editor.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(value().trim())document.getElementById('composer').requestSubmit();}});
   document.getElementById('composer').addEventListener('submit',e=>{
@@ -82,6 +89,41 @@ export async function readingPositionTests(ui,{check,shadow,wait,pause,artifactD
     await open('normal');await send();await pause(2800);await ui.pageClick('#site-bottom');await wait(async()=>{const s=await sample();return s.state==='idle'&&Math.abs(s.top-s.range)<=3;},'site latest button');
     await open('normal');await send();await pause(2800);await ui.eval(()=>{history.pushState({},'',location.pathname+'-other-route');document.getElementById('thread').scrollTo({top:0,behavior:'instant'});});
     await wait(async()=>(await sample()).state==='idle','route change releases');assert.equal((await sample()).top,0);
+  });
+  if(isCase('streaming'))await check('流式期间接管：正文、外层页面、输入区边界和被页面截断的滚轮',async()=>{
+    for(const [mode,selector]of[['manual-normal','#thread'],['manual-outer','header'],['manual-composer','#prompt-textarea'],['manual-stopped','#thread']]){
+      if(process.env.TEST_READING_MODE&&process.env.TEST_READING_MODE!==mode)continue;
+      await open(mode);await send();await wait(async()=>(await sample()).streamed>=1,'stream started before scrolling');
+      const before=await ui.eval(()=>({inner:document.getElementById('thread').scrollTop,outer:document.scrollingElement.scrollTop}));
+      await ui.pageWheel(selector,220);await pause(200);const after=await sample();
+      entry.readingPosition.push({mode,before,after});
+      assert.equal(after.state,'idle',`${mode}: trusted wheel must release original anchor during streaming`);
+      await wait(async()=>await ui.eval(({before,mode})=>mode==='manual-outer'||mode==='manual-composer'?document.scrollingElement.scrollTop>before.outer+40:document.getElementById('thread').scrollTop>before.inner+40,{before,mode}),'real wheel moved page');
+      const moved=await ui.eval(()=>({inner:document.getElementById('thread').scrollTop,outer:document.scrollingElement.scrollTop}));
+      await pause(2600);const end=await sample();
+      assert.equal(end.state,'idle');assert.equal(end.streamed,4,'stream continues after user takeover');
+      const stable=await ui.eval(()=>({inner:document.getElementById('thread').scrollTop,outer:document.scrollingElement.scrollTop}));
+      assert.ok(Math.abs(stable.inner-moved.inner)<=3&&Math.abs(stable.outer-moved.outer)<=3,`${mode}: must not return to original position`);
+      await ui.pageWheel(mode==='manual-outer'||mode==='manual-composer'?'#prompt-textarea':'#thread',-160);await pause(300);
+      const up=await ui.eval(()=>({inner:document.getElementById('thread').scrollTop,outer:document.scrollingElement.scrollTop}));
+      assert.ok(mode==='manual-outer'||mode==='manual-composer'?up.outer<stable.outer-30:up.inner<stable.inner-30,'can also scroll upwards');
+    }
+  });
+  if(isCase('isolation'))await check('流式期间接管：原生滚动条、输入区内部滚动与导航面板隔离',async()=>{
+    await open('manual-scrollbar');await send();await wait(async()=>(await sample()).streamed>=1,'scrollbar stream started');
+    const before=await sample();await ui.screenshot(path.join(artifactDir,entry.browser+'-scrollbar.png'));await ui.pageScrollbar('#thread');
+    entry.readingPosition.push({mode:'manual-scrollbar',before,after:await sample()});
+    await wait(async()=>{const s=await sample();return s.state==='idle'&&Math.abs(s.top-before.top)>80;},'native scrollbar drag releases hold');
+    await pause(2700);assert.equal((await sample()).state,'idle','stream cannot rearm hold');
+    await open('manual-normal');await send();await wait(async()=>(await sample()).streamed>=1,'isolation stream started');
+    await ui.wheel('.list',240);await pause(100);assert.equal((await sample()).state,'held','sidebar wheel keeps body hold');
+    await ui.pageFill('#prompt-textarea',Array.from({length:25},(_,i)=>'draft line '+i).join('\n'));
+    await ui.eval(()=>{const e=document.getElementById('prompt-textarea');e.style.height='70px';e.scrollTop=0;});
+    await ui.pageWheel('#prompt-textarea',120);await pause(200);
+    assert.ok(await ui.eval(()=>document.getElementById('prompt-textarea').scrollTop>30),'native editor scroll moved');
+    assert.equal((await sample()).state,'held','editor-local scroll keeps body hold');
+    await ui.eval(()=>{const e=document.getElementById('prompt-textarea');e.scrollTop=e.scrollHeight;});
+    await ui.pageWheel('#prompt-textarea',120);await pause(200);assert.equal((await sample()).state,'idle','editor boundary releases body hold');
   });
   if(isCase('settings'))await check('保持阅读：Shift+Enter、空输入和关闭选项不拦截正常行为',async()=>{
     const before=await open('normal');await ui.pageFill('#prompt-textarea','第一行');await ui.pageKey('#prompt-textarea','Shift+Enter');await pause(150);
